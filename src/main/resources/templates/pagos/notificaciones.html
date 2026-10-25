@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU09 · Recordatorios de cobro y mora')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('pagos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Notificaciones automáticas y control de mora</h1>
+        <p class="sub">Simulación de correos SMTP y tarea programada (@Scheduled)</p>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="row">
+            <div class="card" style="flex: 1;">
+                <h2>Ejecución manual de tarea programada</h2>
+                <p style="font-size: 14px; color: #4b5563;">
+                    El sistema ejecuta de manera automática un proceso diario que:
+                </p>
+                <ul style="font-size: 13px; color: #374151; padding-left: 20px; line-height: 1.6;">
+                    <li>Detecta clientes cuya fecha de corte vence en exactamente <b>3 días calendario</b> y les despacha un correo de recordatorio.</li>
+                    <li>Identifica clientes con fecha de corte vencida y actualiza su estado y el de sus vehículos a <b>Inactivo</b>.</li>
+                </ul>
+
+                <form th:action="@{/pagos/ejecutar-cron}" method="post" style="margin-top: 18px;">
+                    <button type="submit" class="btn">Ejecutar verificación de cortes ahora</button>
+                </form>
+            </div>
+
+            <div class="card" style="flex: 2;">
+                <h2>Bandeja de correos despachados (SMTP simulado)</h2>
+
+                <div th:if="${#lists.isEmpty(correos)}">
+                    <p style="color: #6b7280; font-size: 14px;">No se han despachado correos de recordatorio en la sesión actual. Ejecuta la verificación para emitir avisos.</p>
+                </div>
+
+                <div th:each="c : ${correos}" class="card" style="background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 12px; padding: 16px;">
+                    <p class="kl" style="margin: 0 0 6px 0;" th:text="${'Destinatario: ' + c.destinatario + ' · Enviado: ' + #temporals.format(c.fechaEnvio, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                    <b th:text="${c.asunto}" style="font-size: 15px; color: #0e7490; display: block; margin-bottom: 8px;"></b>
+                    <pre style="font-family: inherit; font-size: 13px; color: #334155; margin: 0; white-space: pre-wrap;" th:text="${c.mensaje}"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

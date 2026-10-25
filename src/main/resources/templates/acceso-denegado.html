@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HU01 · Acceso denegado (403)</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body style="margin: 0; background: #12263a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+
+<div class="card" style="width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+    <h1>Acceso denegado (403)</h1>
+    <p class="sub">Tu rol actual no tiene permisos suficientes para ingresar a este módulo o panel administrativo.</p>
+    <a th:href="@{/}" class="btn" style="text-decoration: none;">Volver al panel principal</a>
+    <p class="kl" style="margin-top: 18px;">Si crees que esto es un error, por favor contacta al administrador del sistema.</p>
+</div>
+
+</body>
+</html>

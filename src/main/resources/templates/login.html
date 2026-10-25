@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HU01 · Inicio de sesión</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body style="margin: 0; background: #12263a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+
+<div class="card" style="width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+    <h1>Autos Colombia</h1>
+    <p class="sub">Gestión de parqueadero por mensualidad</p>
+
+    <!-- Alerta de Error -->
+    <div class="al e" th:if="${error != null}" th:text="${error}">
+        Credenciales inválidas o usuario inactivo. Verifique e intente de nuevo.
+    </div>
+
+    <!-- Alerta de Cierre de Sesión -->
+    <div class="al s" th:if="${mensaje != null}" th:text="${mensaje}">
+        Ha cerrado sesión de forma segura.
+    </div>
+
+    <!-- Formulario de Login -->
+    <form th:action="@{/login}" method="post">
+        <div style="display: grid; gap: 16px;">
+            <label>Usuario
+                <input class="in" type="text" name="username" placeholder="ej. m.rios o admin01" required autofocus>
+            </label>
+
+            <label>Contraseña
+                <input class="in" type="password" name="password" placeholder="••••••••" required>
+            </label>
+
+            <button type="submit" class="btn" style="width: 100%; margin-top: 6px;">Iniciar sesión</button>
+        </div>
+    </form>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e8ec; font-size: 12px; color: #6b7280; line-height: 1.6;">
+        <b>Cuentas de prueba preconfiguradas:</b><br>
+        • Administrador: <code>admin01</code> / <code>admin123</code><br>
+        • Operario: <code>m.rios</code> / <code>operario123</code>
+    </div>
+</div>
+
+</body>
+</html>

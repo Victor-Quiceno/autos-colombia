@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU07 · Gestión de celdas')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('celdas')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Celdas del parqueadero</h1>
+        <p class="sub">Capacidad física y mantenimiento</p>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="row">
+            <!-- Listado de Celdas -->
+            <div class="card" style="flex: 2;">
+                <h2>Listado</h2>
+
+                <form method="get" th:action="@{/celdas}" class="c2" style="margin-bottom: 14px;">
+                    <label>Filtrar por tipo
+                        <select class="in" name="tipo" onchange="this.form.submit()">
+                            <option value="TODOS" th:selected="${filtroTipo == 'TODOS'}">Todos</option>
+                            <option value="CARRO" th:selected="${filtroTipo == 'CARRO'}">Carro</option>
+                            <option value="MOTO" th:selected="${filtroTipo == 'MOTO'}">Moto</option>
+                        </select>
+                    </label>
+
+                    <label>Filtrar por estado
+                        <select class="in" name="estado" onchange="this.form.submit()">
+                            <option value="TODOS" th:selected="${filtroEstado == 'TODOS'}">Todos</option>
+                            <option value="DISPONIBLE" th:selected="${filtroEstado == 'DISPONIBLE'}">Disponible</option>
+                            <option value="ASIGNADA" th:selected="${filtroEstado == 'ASIGNADA'}">Asignada</option>
+                            <option value="MANTENIMIENTO" th:selected="${filtroEstado == 'MANTENIMIENTO'}">En mantenimiento</option>
+                        </select>
+                    </label>
+                </form>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(celdas)}">
+                        <td colspan="4" style="text-align: center; color: #6b7280;">No hay celdas bajo este filtro.</td>
+                    </tr>
+                    <tr th:each="c : ${celdas}">
+                        <td th:text="${c.codigoCelda}" style="font-weight: 700;">C-01</td>
+                        <td th:text="${c.tipoPermitido}">Carro</td>
+                        <td>
+                            <span th:if="${c.estadoCelda == 'DISPONIBLE'}" class="tg ok">Disponible</span>
+                            <span th:if="${c.estadoCelda == 'ASIGNADA'}" class="tg wr">Asignada</span>
+                            <span th:if="${c.estadoCelda == 'MANTENIMIENTO'}" class="tg no">En mantenimiento</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/celdas/cambiar-estado/{id}(id=${c.id})}" method="post" style="display: flex; gap: 6px;">
+                                <select name="nuevoEstado" class="in" style="margin-top: 0; padding: 4px 8px; font-size: 12px; width: auto;">
+                                    <option value="DISPONIBLE" th:selected="${c.estadoCelda == 'DISPONIBLE'}">Disponible</option>
+                                    <option value="MANTENIMIENTO" th:selected="${c.estadoCelda == 'MANTENIMIENTO'}">Mantenimiento</option>
+                                </select>
+                                <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Cambiar estado</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Formulario Nueva Celda -->
+            <div class="card" style="flex: 1;">
+                <h2>Nueva celda</h2>
+
+                <form th:action="@{/celdas/guardar}" th:object="${celdaDTO}" method="post">
+                    <div style="display: grid; gap: 14px;">
+                        <label>Código identificador
+                            <input class="in" type="text" th:field="*{codigoCelda}" placeholder="ej. C-12, M-06" required style="text-transform: uppercase;">
+                        </label>
+
+                        <label>Tipo de vehículo permitido
+                            <select class="in" th:field="*{tipoPermitido}" required>
+                                <option value="CARRO">Carro</option>
+                                <option value="MOTO">Moto</option>
+                            </select>
+                        </label>
+
+                        <button type="submit" class="btn">Crear celda</button>
+                    </div>
+                </form>
+
+                <p class="kl" style="margin-top: 16px;">
+                    Las celdas creadas quedan inmediatamente en estado <b>Disponible</b> para asignación a mensualidades.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

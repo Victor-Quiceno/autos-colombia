@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU04 · Registro de entrada')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <!-- Barra Lateral -->
+    <div th:replace="~{fragments/layout :: sidebar('entrada')}"></div>
+
+    <!-- Contenido Principal -->
+    <div class="mn">
+        <!-- Barra Superior de Usuario -->
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Registrar entrada</h1>
+        <p class="sub">Control de presencia por placa</p>
+
+        <div class="row">
+            <!-- Formulario de Entrada -->
+            <div class="card" style="flex: 1;">
+                <h2>Vehículo que ingresa</h2>
+                <form th:action="@{/movimientos/entrada/confirmar}" method="post">
+                    <label>Placa
+                        <input class="in" type="text" name="placa" th:value="${entradaDTO != null ? entradaDTO.placa : ''}" placeholder="ej. ABC123" required autofocus style="text-transform: uppercase;">
+                    </label>
+
+                    <div style="margin-top: 16px;">
+                        <button type="submit" class="btn">Confirmar ingreso</button>
+                    </div>
+
+                    <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+                    <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+                </form>
+            </div>
+
+            <!-- Panel de Validaciones -->
+            <div class="card" style="flex: 1;">
+                <h2>Validaciones del sistema</h2>
+                <div class="ln">
+                    <span>Vehículo registrado</span>
+                    <span th:if="${vehiculo != null || vehiculoConsultado != null}" class="tg ok">Sí</span>
+                    <span th:unless="${vehiculo != null || vehiculoConsultado != null}" class="tg no">—</span>
+                </div>
+                <div class="ln">
+                    <span>Vehículo activo</span>
+                    <span th:if="${vehiculo != null && vehiculo.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                    <span th:if="${vehiculoConsultado != null && vehiculoConsultado.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                    <span th:if="${vehiculoConsultado != null && vehiculoConsultado.estado == 'INACTIVO'}" class="tg er">Inactivo</span>
+                    <span th:if="${vehiculo == null && vehiculoConsultado == null}" class="tg no">—</span>
+                </div>
+                <div class="ln">
+                    <span>Dueño al día</span>
+                    <span th:if="${vehiculo != null && vehiculo.dueno.estado == 'ACTIVO'}" class="tg ok">Al día</span>
+                    <span th:if="${vehiculoConsultado != null && vehiculoConsultado.dueno.estado == 'ACTIVO'}" class="tg ok">Al día</span>
+                    <span th:if="${vehiculoConsultado != null && vehiculoConsultado.dueno.estado == 'INACTIVO'}" class="tg er">Mora</span>
+                    <span th:if="${vehiculo == null && vehiculoConsultado == null}" class="tg no">—</span>
+                </div>
+                <div class="ln">
+                    <span>Presencia actual</span>
+                    <span th:if="${movimientoGenerado != null}" class="tg ok">Presente</span>
+                    <span th:if="${movimientoGenerado == null && vehiculoConsultado != null && vehiculoConsultado.estadoPresencia == 'PRESENTE'}" class="tg er">Presente (Ya dentro)</span>
+                    <span th:if="${movimientoGenerado == null && vehiculoConsultado != null && vehiculoConsultado.estadoPresencia == 'AUSENTE'}" class="tg ok">Ausente</span>
+                    <span th:if="${movimientoGenerado == null && vehiculoConsultado == null}" class="tg no">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registro Generado -->
+        <div class="card" th:if="${movimientoGenerado != null}">
+            <h2>Registro generado</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Fecha y hora</th>
+                    <th>Placa</th>
+                    <th>Tipo</th>
+                    <th>Operario</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td th:text="${#temporals.format(movimientoGenerado.fechaHora, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${movimientoGenerado.vehiculo.placa}" style="font-weight: 600;"></td>
+                    <td><span class="tg ok">Entrada</span></td>
+                    <td th:text="${movimientoGenerado.usuario.username}"></td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="kl" style="margin-top: 10px; color: #15803d; font-weight: 600;">Presencia del vehículo → Presente</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

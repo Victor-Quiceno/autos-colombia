@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="header(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">Autos Colombia</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<!-- Fragmento de Barra Lateral Dinámica según Rol -->
+<div class="sb" th:fragment="sidebar(activeTab)">
+    <b>Autos Colombia</b>
+
+    <!-- Menú para ROL OPERARIO -->
+    <div sec:authorize="hasRole('OPERARIO')">
+        <a th:href="@{/panel/operativo}" th:class="${activeTab == 'panel'} ? 'nav-item on' : 'nav-item'">Panel</a>
+        <a th:href="@{/movimientos/entrada}" th:class="${activeTab == 'entrada'} ? 'nav-item on' : 'nav-item'">Registrar entrada</a>
+        <a th:href="@{/movimientos/salida}" th:class="${activeTab == 'salida'} ? 'nav-item on' : 'nav-item'">Registrar salida</a>
+        <a th:href="@{/novedades/nueva}" th:class="${activeTab == 'novedades'} ? 'nav-item on' : 'nav-item'">Registrar novedad</a>
+        <a th:href="@{/duenos/nuevo}" th:class="${activeTab == 'duenos'} ? 'nav-item on' : 'nav-item'">Nuevo dueño</a>
+        <a th:href="@{/vehiculos/nuevo}" th:class="${activeTab == 'vehiculos'} ? 'nav-item on' : 'nav-item'">Nuevo vehículo</a>
+    </div>
+
+    <!-- Menú para ROL ADMINISTRADOR -->
+    <div sec:authorize="hasRole('ADMIN')">
+        <a th:href="@{/panel/administrativo}" th:class="${activeTab == 'panel'} ? 'nav-item on' : 'nav-item'">Panel</a>
+        <a th:href="@{/duenos}" th:class="${activeTab == 'duenos'} ? 'nav-item on' : 'nav-item'">Dueños</a>
+        <a th:href="@{/vehiculos}" th:class="${activeTab == 'vehiculos'} ? 'nav-item on' : 'nav-item'">Vehículos</a>
+        <a th:href="@{/celdas}" th:class="${activeTab == 'celdas'} ? 'nav-item on' : 'nav-item'">Celdas</a>
+        <a th:href="@{/movimientos}" th:class="${activeTab == 'movimientos' || activeTab == 'entrada' || activeTab == 'salida'} ? 'nav-item on' : 'nav-item'">Movimientos</a>
+        <a th:href="@{/novedades}" th:class="${activeTab == 'novedades'} ? 'nav-item on' : 'nav-item'">Novedades</a>
+        <a th:href="@{/pagos}" th:class="${activeTab == 'pagos'} ? 'nav-item on' : 'nav-item'">Pagos</a>
+        <a th:href="@{/tarifas}" th:class="${activeTab == 'tarifas'} ? 'nav-item on' : 'nav-item'">Tarifas</a>
+    </div>
+</div>
+
+<!-- Fragmento de Encabezado Superior de Usuario -->
+<div class="user-header-bar" th:fragment="userbar">
+    <span sec:authorize="hasRole('ADMIN')">Administrador</span>
+    <span sec:authorize="hasRole('OPERARIO')">Operario</span>
+    <span>·</span>
+    <span sec:authentication="name" style="font-weight: 600;">usuario</span>
+    <span>·</span>
+    <form th:action="@{/logout}" method="post" style="display: inline;">
+        <button type="submit" class="logout-link">Cerrar sesión</button>
+    </form>
+</div>
+
+</body>
+</html>

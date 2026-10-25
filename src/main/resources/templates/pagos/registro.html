@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU08 · Pago de mensualidad')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('pagos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Pago de mensualidad</h1>
+        <p class="sub">Pasarela de pagos (simulada)</p>
+
+        <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+        <div class="al e" th:if="${errorLiquidacion != null}" th:text="${errorLiquidacion}"></div>
+
+        <div class="row">
+            <!-- Formulario de Liquidación y Pago -->
+            <div class="card" style="flex: 1;">
+                <h2>Liquidación</h2>
+
+                <form method="get" th:action="@{/pagos}" id="formSeleccionDueno" style="margin-bottom: 16px;">
+                    <label>Dueño
+                        <select class="in" name="idDueno" onchange="this.form.submit()">
+                            <option th:each="d : ${duenos}"
+                                    th:value="${d.id}"
+                                    th:text="${d.nombreCompleto + ' · ' + d.tipoDocumento + ' ' + d.numeroDocumento + (d.estado == 'INACTIVO' ? ' (Inactivo por mora)' : '')}"
+                                    th:selected="${d.id == idDuenoSeleccionado}"></option>
+                        </select>
+                    </label>
+                </form>
+
+                <div th:if="${liq != null}">
+                    <div class="ln">
+                        <span th:text="${liq.cantidadCarros + ' carros × $' + #numbers.formatDecimal(liq.tarifaCarro, 0, 'POINT', 0, 'POINT')}"></span>
+                        <b th:text="${'$' + #numbers.formatDecimal(liq.subtotalCarros, 0, 'POINT', 0, 'POINT')}">$0</b>
+                    </div>
+                    <div class="ln">
+                        <span th:text="${liq.cantidadMotos + ' motos × $' + #numbers.formatDecimal(liq.tarifaMoto, 0, 'POINT', 0, 'POINT')}"></span>
+                        <b th:text="${'$' + #numbers.formatDecimal(liq.subtotalMotos, 0, 'POINT', 0, 'POINT')}">$0</b>
+                    </div>
+                    <div class="ln">
+                        <span><b>Total a pagar</b></span>
+                        <b class="k" style="font-size: 24px;" th:text="${'$' + #numbers.formatDecimal(liq.totalPagar, 0, 'POINT', 0, 'POINT')}">$0</b>
+                    </div>
+
+                    <form th:action="@{/pagos/procesar}" method="post" style="margin-top: 18px;">
+                        <input type="hidden" name="idDueno" th:value="${liq.dueno.id}">
+
+                        <label>Método de pago
+                            <select class="in" name="metodoPago" required>
+                                <option value="TARJETA_CREDITO">Tarjeta de crédito</option>
+                                <option value="PSE">PSE</option>
+                                <option value="TARJETA_DEBITO">Tarjeta débito</option>
+                                <option value="EFECTIVO">Efectivo en caja</option>
+                            </select>
+                        </label>
+
+                        <button type="submit" class="btn" style="width: 100%; margin-top: 16px;">Pagar con pasarela</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Comprobante Generado -->
+            <div class="card" style="flex: 1;">
+                <h2>Comprobante</h2>
+
+                <div th:if="${comprobante != null}">
+                    <div class="al s">Pago aprobado: dueño y vehículos reactivados</div>
+                    <div class="ln">
+                        <span>Referencia</span>
+                        <b th:text="${comprobante.referenciaTransaccion}">[REF-PAGO]</b>
+                    </div>
+                    <div class="ln">
+                        <span>Fecha y hora</span>
+                        <b th:text="${#temporals.format(comprobante.fechaPago, 'yyyy-MM-dd HH:mm')}"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Valor liquidado</span>
+                        <b th:text="${'$' + #numbers.formatDecimal(comprobante.montoTotal, 0, 'POINT', 0, 'POINT')}"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Método</span>
+                        <b th:text="${comprobante.metodoPago}"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Nueva fecha de corte</span>
+                        <b th:text="${comprobante.dueno.fechaCorte}"></b>
+                    </div>
+                </div>
+
+                <div th:unless="${comprobante != null}">
+                    <p style="color: #6b7280; font-size: 14px;">Seleccione un cliente y confirme la transacción para generar el comprobante oficial de pago.</p>
+                    <div style="margin-top: 24px;">
+                        <a th:href="@{/pagos/historial}" class="btn b2" style="width: 100%;">Ver historial de transacciones</a>
+                        <a th:href="@{/pagos/notificaciones}" class="btn b2" style="width: 100%; margin-top: 8px;">Revisar recordatorios por corte (HU09)</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU08 · Historial de pagos')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('pagos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Historial de transacciones de mensualidad</h1>
+        <p class="sub">Auditoría de pagos procesados mediante la pasarela</p>
+
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <a th:href="@{/pagos}" class="btn">Procesar nuevo pago</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Referencia</th>
+                    <th>Dueño</th>
+                    <th>Fecha y hora</th>
+                    <th>Vehículos</th>
+                    <th>Método</th>
+                    <th>Monto liquidado</th>
+                    <th>Estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(pagos)}">
+                    <td colspan="7" style="text-align: center; color: #6b7280;">No se registran pagos en el histórico.</td>
+                </tr>
+                <tr th:each="p : ${pagos}">
+                    <td th:text="${p.referenciaTransaccion}" style="font-weight: 700; color: #0e7490;"></td>
+                    <td th:text="${p.dueno.nombreCompleto}"></td>
+                    <td th:text="${#temporals.format(p.fechaPago, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${p.cantidadVehiculos} + ' activos'"></td>
+                    <td th:text="${p.metodoPago}"></td>
+                    <td th:text="${'$' + #numbers.formatDecimal(p.montoTotal, 0, 'POINT', 0, 'POINT')}" style="font-weight: 600;"></td>
+                    <td>
+                        <span th:if="${p.estadoPago == 'APROBADO'}" class="tg ok">Aprobado</span>
+                        <span th:if="${p.estadoPago != 'APROBADO'}" class="tg er">Rechazado</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

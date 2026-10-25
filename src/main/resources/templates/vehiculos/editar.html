@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU10 · Editar vehículo')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('vehiculos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Editar vehículo</h1>
+        <p class="sub">Actualización de características técnicas del vehículo</p>
+
+        <div class="row">
+            <div class="card" style="flex: 2;">
+                <h2>Datos del vehículo</h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+
+                <form th:action="@{/vehiculos/actualizar/{id}(id=${vehiculoDTO.id})}" th:object="${vehiculoDTO}" method="post">
+                    <div class="c2">
+                        <label>Placa
+                            <input class="in" type="text" th:field="*{placa}" readonly style="background: #f3f4f6; color: #6b7280; font-weight: 700;">
+                        </label>
+
+                        <label>Tipo de vehículo
+                            <input class="in" type="text" th:field="*{tipoVehiculo}" readonly style="background: #f3f4f6; color: #6b7280;">
+                        </label>
+
+                        <label>Marca
+                            <input class="in" type="text" th:field="*{marca}" required>
+                        </label>
+
+                        <label>Modelo (año)
+                            <input class="in" type="number" th:field="*{modelo}" required min="1950" max="2100">
+                        </label>
+
+                        <label>Color
+                            <input class="in" type="text" th:field="*{color}" required>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn">Actualizar características</button>
+                        <a th:href="@{/vehiculos}" class="btn b2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card" style="flex: 1;">
+                <h2>Vinculación actual</h2>
+                <div class="ln">
+                    <span>Dueño</span>
+                    <span th:text="${vehiculo.dueno.nombreCompleto}" style="font-weight: 600;"></span>
+                </div>
+                <div class="ln">
+                    <span>Celda asignada</span>
+                    <span th:text="${vehiculo.celda != null ? vehiculo.celda.codigoCelda : 'Sin celda'}" class="tg wr"></span>
+                </div>
+                <div class="ln">
+                    <span>Presencia actual</span>
+                    <span th:text="${vehiculo.estadoPresencia}" class="tg ok"></span>
+                </div>
+                <div class="ln">
+                    <span>Estado del registro</span>
+                    <span th:text="${vehiculo.estado}" class="tg ok"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

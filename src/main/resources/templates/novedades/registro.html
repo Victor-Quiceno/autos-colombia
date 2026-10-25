@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU06 · Registro de novedades')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <!-- Barra Lateral -->
+    <div th:replace="~{fragments/layout :: sidebar('novedades')}"></div>
+
+    <!-- Contenido Principal -->
+    <div class="mn">
+        <!-- Barra Superior de Usuario -->
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Registrar novedad</h1>
+        <p class="sub">Respaldo formal de incidencias sobre un vehículo</p>
+
+        <div class="row">
+            <!-- Formulario de Registro de Novedad -->
+            <div class="card" style="flex: 3;">
+                <h2>Nueva novedad</h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+                <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+
+                <form th:action="@{/novedades/guardar}" method="post">
+                    <div class="c2">
+                        <label>Placa del vehículo
+                            <input class="in" type="text" name="placa" placeholder="ej. ABC123" required style="text-transform: uppercase;">
+                        </label>
+
+                        <label>Tipo de novedad
+                            <select class="in" name="tipoNovedad" required>
+                                <option value="RAYON">Rayón</option>
+                                <option value="GOLPE">Golpe previo</option>
+                                <option value="FUGA">Fuga de fluidos</option>
+                                <option value="OBJETO_OLVIDADO">Objeto olvidado</option>
+                                <option value="OTRO">Otro</option>
+                            </select>
+                        </label>
+
+                        <label>Nivel de severidad
+                            <select class="in" name="nivelSeveridad" required>
+                                <option value="BAJA">Baja</option>
+                                <option value="MEDIA" selected>Media</option>
+                                <option value="ALTA">Alta</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div style="margin: 14px 0;">
+                        <label>Descripción detallada
+                            <textarea class="in" name="descripcion" rows="4" placeholder="Describa el estado de la incidencia y la zona afectada..." required></textarea>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn">Guardar novedad</button>
+                    <p class="kl" style="margin-top: 10px;">Se registra automáticamente con fecha y hora actual, tu usuario y estado Abierta.</p>
+                </form>
+            </div>
+
+            <!-- Accesos y Lista Rápida -->
+            <div class="card" style="flex: 2;">
+                <h2>Acciones de consulta</h2>
+                <p style="font-size: 14px; color: #4b5563;">Para revisar o gestionar el historial completo de novedades y cambiar sus estados de seguimiento:</p>
+                <a th:href="@{/novedades}" class="btn b2" style="width: 100%; margin-top: 10px;">Ver todas las novedades</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

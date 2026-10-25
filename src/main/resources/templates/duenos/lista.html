@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: header('HU10 · Dueños con borrado lógico')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('duenos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Dueños vinculados</h1>
+        <p class="sub">Actualizar e inhabilitar clientes conservando la trazabilidad</p>
+
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 8px;">
+                <a th:href="@{/duenos(filtro='TODOS')}" th:class="${filtroActual == 'TODOS'} ? 'btn' : 'btn b2'">Todos</a>
+                <a th:href="@{/duenos(filtro='ACTIVO')}" th:class="${filtroActual == 'ACTIVO'} ? 'btn' : 'btn b2'">Activos</a>
+                <a th:href="@{/duenos(filtro='INACTIVO')}" th:class="${filtroActual == 'INACTIVO'} ? 'btn' : 'btn b2'">Inactivos</a>
+            </div>
+
+            <a th:href="@{/duenos/nuevo}" class="btn">Nuevo dueño</a>
+        </div>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Cliente</th>
+                    <th>Contacto</th>
+                    <th>Corte mensual</th>
+                    <th>Vehículos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(duenos)}">
+                    <td colspan="7" style="text-align: center; color: #6b7280;">No se encontraron clientes registrados bajo este filtro.</td>
+                </tr>
+                <tr th:each="d : ${duenos}">
+                    <td th:text="${d.tipoDocumento + ' ' + d.numeroDocumento}"></td>
+                    <td th:text="${d.nombreCompleto}" style="font-weight: 600;"></td>
+                    <td>
+                        <div th:text="${d.telefono}"></div>
+                        <div th:text="${d.correo}" style="color: #6b7280; font-size: 12px;"></div>
+                    </td>
+                    <td th:text="${d.fechaCorte}"></td>
+                    <td th:text="${d.vehiculos.size()} + ' asociados'"></td>
+                    <td>
+                        <span th:if="${d.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                        <span th:if="${d.estado == 'INACTIVO'}" class="tg no">Inactivo</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <a th:href="@{/duenos/editar/{id}(id=${d.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
+
+                            <span sec:authorize="hasRole('ADMIN')">
+                                <form th:if="${d.estado == 'ACTIVO'}" th:action="@{/duenos/inhabilitar/{id}(id=${d.id})}" method="post" style="display: inline;" onsubmit="return confirm('¿Inhabilitar dueño y sus vehículos asociados por borrado lógico?');">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</button>
+                                </form>
+                                <form th:if="${d.estado == 'INACTIVO'}" th:action="@{/duenos/activar/{id}(id=${d.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</button>
+                                </form>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

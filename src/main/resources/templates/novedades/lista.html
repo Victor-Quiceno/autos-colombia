@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU06 · Listado de novedades')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('novedades')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Novedades del parqueadero</h1>
+        <p class="sub">Historial e incidencias reportadas sobre vehículos</p>
+
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <a th:href="@{/novedades/nueva}" class="btn">Reportar nueva novedad</a>
+        </div>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Severidad</th>
+                    <th>Fecha y hora</th>
+                    <th>Operario</th>
+                    <th>Estado</th>
+                    <th>Cambiar estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(novedades)}">
+                    <td colspan="8" style="text-align: center; color: #6b7280;">No hay novedades registradas.</td>
+                </tr>
+                <tr th:each="n : ${novedades}">
+                    <td th:text="${n.vehiculo.placa}" style="font-weight: 600;">ABC123</td>
+                    <td th:text="${n.tipoNovedad}">RAYON</td>
+                    <td th:text="${n.descripcion}" style="max-width: 280px;"></td>
+                    <td>
+                        <span th:if="${n.nivelSeveridad == 'BAJA'}" class="tg ok">Baja</span>
+                        <span th:if="${n.nivelSeveridad == 'MEDIA'}" class="tg wr">Media</span>
+                        <span th:if="${n.nivelSeveridad == 'ALTA'}" class="tg er">Alta</span>
+                    </td>
+                    <td th:text="${#temporals.format(n.fechaHora, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${n.usuario.username}"></td>
+                    <td>
+                        <span th:if="${n.estadoNovedad == 'ABIERTA'}" class="tg wr">Abierta</span>
+                        <span th:if="${n.estadoNovedad == 'ATENDIDA'}" class="tg i">Atendida</span>
+                        <span th:if="${n.estadoNovedad == 'CERRADA'}" class="tg ok">Cerrada</span>
+                    </td>
+                    <td>
+                        <form th:action="@{/novedades/cambiar-estado/{id}(id=${n.id})}" method="post" style="display: flex; gap: 6px;">
+                            <select name="nuevoEstado" class="in" style="margin-top: 0; padding: 4px 8px; font-size: 12px; width: auto;">
+                                <option value="ABIERTA" th:selected="${n.estadoNovedad == 'ABIERTA'}">Abierta</option>
+                                <option value="ATENDIDA" th:selected="${n.estadoNovedad == 'ATENDIDA'}">Atendida</option>
+                                <option value="CERRADA" th:selected="${n.estadoNovedad == 'CERRADA'}">Cerrada</option>
+                            </select>
+                            <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Actualizar</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

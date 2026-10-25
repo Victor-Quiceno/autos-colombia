@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU04 / HU05 · Movimientos')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('movimientos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Registro de movimientos</h1>
+        <p class="sub">Auditoría completa de entradas y salidas del parqueadero</p>
+
+        <div class="row" style="gap: 12px;">
+            <a th:href="@{/movimientos/entrada}" class="btn">Registrar entrada</a>
+            <a th:href="@{/movimientos/salida}" class="btn b2">Registrar salida</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Tipo de movimiento</th>
+                    <th>Fecha y hora</th>
+                    <th>Vehículo</th>
+                    <th>Dueño</th>
+                    <th>Operario responsable</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(movimientos)}">
+                    <td colspan="6" style="text-align: center; color: #6b7280;">No hay movimientos registrados.</td>
+                </tr>
+                <tr th:each="m : ${movimientos}">
+                    <td th:text="${m.vehiculo.placa}" style="font-weight: 700;">ABC123</td>
+                    <td>
+                        <span th:if="${m.tipoMovimiento == 'ENTRADA'}" class="tg ok">Entrada</span>
+                        <span th:if="${m.tipoMovimiento == 'SALIDA'}" class="tg no">Salida</span>
+                    </td>
+                    <td th:text="${#temporals.format(m.fechaHora, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${m.vehiculo.marca + ' ' + m.vehiculo.modelo + ' (' + m.vehiculo.color + ')'}"></td>
+                    <td th:text="${m.vehiculo.dueno.nombreCompleto}"></td>
+                    <td th:text="${m.usuario.username}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

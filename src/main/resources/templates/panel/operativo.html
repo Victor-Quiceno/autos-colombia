@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU11 · Panel operativo')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <!-- Barra Lateral -->
+    <div th:replace="~{fragments/layout :: sidebar('panel')}"></div>
+
+    <!-- Contenido Principal -->
+    <div class="mn">
+        <!-- Barra Superior de Usuario -->
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Panel operativo</h1>
+        <p class="sub">Ocupación y movimientos en tiempo real</p>
+
+        <!-- Tarjetas de Métricas -->
+        <div class="row">
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.vehiculosPresentes}">18</div>
+                <div class="kl">Vehículos presentes</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.celdasCarroDisponibles}">7</div>
+                <div class="kl">Celdas de carro disponibles</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.celdasMotoDisponibles}">5</div>
+                <div class="kl">Celdas de moto disponibles</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.novedadesAbiertas}">3</div>
+                <div class="kl">Novedades abiertas</div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción Rápida -->
+        <div class="row">
+            <a th:href="@{/movimientos/entrada}" class="btn">Registrar entrada</a>
+            <a th:href="@{/movimientos/salida}" class="btn">Registrar salida</a>
+            <a th:href="@{/novedades/nueva}" class="btn b2">Reportar novedad</a>
+        </div>
+
+        <!-- Tabla de Últimos Movimientos -->
+        <div class="card">
+            <h2>Últimos movimientos</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Fecha y hora</th>
+                    <th>Tipo</th>
+                    <th>Operario</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(movimientos)}">
+                    <td colspan="4" style="text-align: center; color: #6b7280;">No hay movimientos registrados recientemente.</td>
+                </tr>
+                <tr th:each="mov : ${movimientos}">
+                    <td th:text="${mov.vehiculo.placa}" style="font-weight: 600;">ABC123</td>
+                    <td th:text="${#temporals.format(mov.fechaHora, 'yyyy-MM-dd HH:mm')}">2026-10-25 08:12</td>
+                    <td>
+                        <span th:if="${mov.tipoMovimiento == 'ENTRADA'}" class="tg ok">Entrada</span>
+                        <span th:if="${mov.tipoMovimiento == 'SALIDA'}" class="tg no">Salida</span>
+                    </td>
+                    <td th:text="${mov.usuario.username}">m.rios</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU10 · Editar dueño')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('duenos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Editar dueño</h1>
+        <p class="sub">Actualización de datos personales y de contacto</p>
+
+        <div class="row">
+            <div class="card" style="flex: 2;">
+                <h2>Información del cliente</h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+
+                <form th:action="@{/duenos/actualizar/{id}(id=${duenoDTO.id})}" th:object="${duenoDTO}" method="post">
+                    <div class="c2">
+                        <label>Tipo de documento
+                            <input class="in" type="text" th:field="*{tipoDocumento}" readonly style="background: #f3f4f6; color: #6b7280;">
+                        </label>
+
+                        <label>Número de documento
+                            <input class="in" type="text" th:field="*{numeroDocumento}" readonly style="background: #f3f4f6; color: #6b7280;">
+                        </label>
+
+                        <label>Nombres
+                            <input class="in" type="text" th:field="*{nombres}" required>
+                            <span th:if="${#fields.hasErrors('nombres')}" th:errors="*{nombres}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Apellidos
+                            <input class="in" type="text" th:field="*{apellidos}" required>
+                            <span th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Teléfono
+                            <input class="in" type="text" th:field="*{telefono}" required>
+                            <span th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Correo electrónico
+                            <input class="in" type="email" th:field="*{correo}" required>
+                            <span th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn">Actualizar datos</button>
+                        <a th:href="@{/duenos}" class="btn b2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card" style="flex: 1;">
+                <h2>Parámetros del servicio</h2>
+                <div class="ln">
+                    <span>Fecha vinculación</span>
+                    <span th:text="${duenoDTO.fechaVinculacion}" style="font-weight: 600;"></span>
+                </div>
+                <div class="ln">
+                    <span>Fecha de corte</span>
+                    <span th:text="${duenoDTO.fechaCorte}" style="font-weight: 600;"></span>
+                </div>
+                <div class="ln">
+                    <span>Estado actual</span>
+                    <span th:text="${duenoDTO.estado}" class="tg ok"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: header('HU10 · Administración de vehículos con borrado lógico')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('vehiculos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Vehículos</h1>
+        <p class="sub">Actualizar e inhabilitar sin perder histórico</p>
+
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 8px;">
+                <a th:href="@{/vehiculos(filtro='TODOS')}" th:class="${filtroActual == 'TODOS'} ? 'btn' : 'btn b2'">Todos</a>
+                <a th:href="@{/vehiculos(filtro='ACTIVO')}" th:class="${filtroActual == 'ACTIVO'} ? 'btn' : 'btn b2'">Activos</a>
+                <a th:href="@{/vehiculos(filtro='INACTIVO')}" th:class="${filtroActual == 'INACTIVO'} ? 'btn' : 'btn b2'">Inactivos</a>
+            </div>
+
+            <a th:href="@{/vehiculos/nuevo}" class="btn">Nuevo vehículo</a>
+        </div>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Tipo</th>
+                    <th>Marca y Modelo</th>
+                    <th>Dueño</th>
+                    <th>Celda</th>
+                    <th>Presencia</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(vehiculos)}">
+                    <td colspan="8" style="text-align: center; color: #6b7280;">No se encontraron vehículos registrados bajo este filtro.</td>
+                </tr>
+                <tr th:each="v : ${vehiculos}">
+                    <td th:text="${v.placa}" style="font-weight: 700;">ABC123</td>
+                    <td th:text="${v.tipoVehiculo}">CARRO</td>
+                    <td th:text="${v.marca + ' ' + v.modelo + ' (' + v.color + ')'}"></td>
+                    <td th:text="${v.dueno.nombreCompleto}">Laura Gómez</td>
+                    <td>
+                        <span th:if="${v.celda != null}" th:text="${v.celda.codigoCelda}" class="tg wr">C-04</span>
+                        <span th:unless="${v.celda != null}">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${v.estadoPresencia == 'PRESENTE'}" class="tg ok">Presente</span>
+                        <span th:if="${v.estadoPresencia == 'AUSENTE'}" class="tg no">Ausente</span>
+                    </td>
+                    <td>
+                        <span th:if="${v.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                        <span th:if="${v.estado == 'INACTIVO'}" class="tg no">Inactivo</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <a th:href="@{/vehiculos/editar/{id}(id=${v.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
+
+                            <span sec:authorize="hasRole('ADMIN')">
+                                <form th:if="${v.estado == 'ACTIVO'}" th:action="@{/vehiculos/inhabilitar/{id}(id=${v.id})}" method="post" style="display: inline;" onsubmit="return confirm('¿Inhabilitar vehículo por borrado lógico? Su celda pasará a Disponible.');">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</button>
+                                </form>
+                                <form th:if="${v.estado == 'INACTIVO'}" th:action="@{/vehiculos/activar/{id}(id=${v.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</button>
+                                </form>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

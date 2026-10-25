@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU03 · Registro de vehículos')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('vehiculos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Registrar vehículo</h1>
+        <p class="sub">Asignación de celda exclusiva al vehículo</p>
+
+        <div class="row">
+            <!-- Formulario de Registro -->
+            <div class="card" style="flex: 2;">
+                <h2>Datos del vehículo</h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+
+                <form th:action="@{/vehiculos/guardar}" th:object="${vehiculoDTO}" method="post">
+                    <div class="c2">
+                        <label>Placa
+                            <input class="in" type="text" th:field="*{placa}" placeholder="ej. ABC123" required style="text-transform: uppercase;">
+                            <span th:if="${#fields.hasErrors('placa')}" th:errors="*{placa}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Tipo de vehículo
+                            <select class="in" th:field="*{tipoVehiculo}" id="tipoVehiculoSelect" required onchange="filtrarCeldasPorTipo()">
+                                <option value="CARRO">Carro</option>
+                                <option value="MOTO">Moto</option>
+                            </select>
+                        </label>
+
+                        <label>Marca
+                            <input class="in" type="text" th:field="*{marca}" placeholder="ej. Mazda, Renault" required>
+                        </label>
+
+                        <label>Modelo (año)
+                            <input class="in" type="number" th:field="*{modelo}" placeholder="ej. 2022" required min="1950" max="2100">
+                        </label>
+
+                        <label>Color
+                            <input class="in" type="text" th:field="*{color}" placeholder="ej. Gris" required>
+                        </label>
+
+                        <label>Dueño (solo activos)
+                            <select class="in" th:field="*{idDueno}" required>
+                                <option th:each="d : ${duenosActivos}" th:value="${d.id}" th:text="${d.nombreCompleto + ' · ' + d.tipoDocumento + ' ' + d.numeroDocumento}"></option>
+                            </select>
+                        </label>
+
+                        <label>Celda disponible
+                            <select class="in" th:field="*{idCelda}" id="celdaSelect" required>
+                                <optgroup label="Celdas para Carro" id="grupoCarro">
+                                    <option th:each="c : ${celdasCarro}" th:value="${c.id}" th:text="${c.codigoCelda + ' (Carro - Disponible)'}"></option>
+                                </optgroup>
+                                <optgroup label="Celdas para Moto" id="grupoMoto">
+                                    <option th:each="c : ${celdasMoto}" th:value="${c.id}" th:text="${c.codigoCelda + ' (Moto - Disponible)'}"></option>
+                                </optgroup>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn">Registrar vehículo</button>
+                        <a th:href="@{/vehiculos}" class="btn b2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Panel Informativo -->
+            <div class="card" style="flex: 1;">
+                <h2>Al registrar</h2>
+                <div class="al i">Estado: Activo · Presencia: Ausente</div>
+                <div class="al i">La celda elegida pasa a estado Asignada</div>
+                <div class="al e">Placa duplicada o celda no disponible: la operación se rechaza.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filtrarCeldasPorTipo() {
+    const tipo = document.getElementById('tipoVehiculoSelect').value;
+    const grupoCarro = document.getElementById('grupoCarro');
+    const grupoMoto = document.getElementById('grupoMoto');
+
+    if (tipo === 'CARRO') {
+        grupoCarro.style.display = '';
+        grupoMoto.style.display = 'none';
+        if (grupoCarro.children.length > 0) grupoCarro.children[0].selected = true;
+    } else {
+        grupoCarro.style.display = 'none';
+        grupoMoto.style.display = '';
+        if (grupoMoto.children.length > 0) grupoMoto.children[0].selected = true;
+    }
+}
+window.onload = filtrarCeldasPorTipo;
+</script>
+
+</body>
+</html>

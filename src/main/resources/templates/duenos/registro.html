@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU02 · Registro de dueños')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('duenos')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Registrar dueño</h1>
+        <p class="sub">Vinculación de un nuevo cliente con mensualidad</p>
+
+        <div class="row">
+            <!-- Formulario de Registro -->
+            <div class="card" style="flex: 2;">
+                <h2>Datos del cliente</h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+
+                <form th:action="@{/duenos/guardar}" th:object="${duenoDTO}" method="post">
+                    <div class="c2">
+                        <label>Tipo de documento
+                            <select class="in" th:field="*{tipoDocumento}" required>
+                                <option value="CC">CC</option>
+                                <option value="CE">CE</option>
+                                <option value="NIT">NIT</option>
+                                <option value="PASAPORTE">Pasaporte</option>
+                            </select>
+                        </label>
+
+                        <label>Número de documento
+                            <input class="in" type="text" th:field="*{numeroDocumento}" placeholder="ej. 1037456789" required>
+                            <span th:if="${#fields.hasErrors('numeroDocumento')}" th:errors="*{numeroDocumento}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Nombres
+                            <input class="in" type="text" th:field="*{nombres}" placeholder="ej. Laura" required>
+                            <span th:if="${#fields.hasErrors('nombres')}" th:errors="*{nombres}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Apellidos
+                            <input class="in" type="text" th:field="*{apellidos}" placeholder="ej. Gómez Ruiz" required>
+                            <span th:if="${#fields.hasErrors('apellidos')}" th:errors="*{apellidos}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Teléfono
+                            <input class="in" type="text" th:field="*{telefono}" placeholder="ej. 3001234567" required>
+                            <span th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Correo electrónico
+                            <input class="in" type="email" th:field="*{correo}" placeholder="ej. cliente@correo.com" required>
+                            <span th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn">Guardar dueño</button>
+                        <a th:href="@{/duenos}" class="btn b2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Panel Informativo -->
+            <div class="card" style="flex: 1;">
+                <h2>Al guardar</h2>
+                <div class="al i">Estado inicial: Activo</div>
+                <div class="al i">Fecha de corte: se calcula automáticamente a 1 mes exacto desde la vinculación.</div>
+                <div class="al e">Se rechazará si el documento o el correo ya existen en el sistema.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

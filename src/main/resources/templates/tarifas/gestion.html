@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU12 · Parametrización de tarifas')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('tarifas')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Tarifas de mensualidad</h1>
+        <p class="sub">Solo para el rol Administrador</p>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="row">
+            <!-- Formulario de Actualización de Tarifa -->
+            <div class="card" style="flex: 1;">
+                <h2>Actualizar valor mensual</h2>
+
+                <form th:action="@{/tarifas/actualizar}" th:object="${tarifaDTO}" method="post">
+                    <div style="display: grid; gap: 14px;">
+                        <label>Tipo de vehículo
+                            <select class="in" th:field="*{tipoVehiculo}" required>
+                                <option value="CARRO">Carro</option>
+                                <option value="MOTO">Moto</option>
+                            </select>
+                        </label>
+
+                        <label>Nuevo valor mensual (COP)
+                            <input class="in" type="number" th:field="*{valorMensualidad}" placeholder="ej. 120000" min="1000" step="1000" required>
+                        </label>
+
+                        <div class="al i">
+                            Aplica a cobros generados desde hoy; los pagos anteriores conservan su valor liquidado histórico.
+                        </div>
+
+                        <button type="submit" class="btn">Guardar tarifa</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla de Tarifas Vigentes -->
+            <div class="card" style="flex: 2;">
+                <h2>Tarifas vigentes en el sistema</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Tipo de vehículo</th>
+                        <th>Valor mensual</th>
+                        <th>Última actualización</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="t : ${tarifas}">
+                        <td th:text="${t.tipoVehiculo}" style="font-weight: 700;">CARRO</td>
+                        <td th:text="${'$' + #numbers.formatDecimal(t.valorMensualidad, 0, 'POINT', 0, 'POINT')}" style="color: #0e7490; font-weight: 600;">$120.000</td>
+                        <td th:text="${t.fechaActualizacion}">2026-10-25</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

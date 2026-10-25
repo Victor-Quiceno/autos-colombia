@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU07 / HU11 · Panel administrativo')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <!-- Barra Lateral -->
+    <div th:replace="~{fragments/layout :: sidebar('panel')}"></div>
+
+    <!-- Contenido Principal -->
+    <div class="mn">
+        <!-- Barra Superior de Usuario -->
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Panel administrativo</h1>
+        <p class="sub">Control gerencial, celdas y operaciones generales</p>
+
+        <!-- Tarjetas de Métricas -->
+        <div class="row">
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.vehiculosPresentes}">18</div>
+                <div class="kl">Vehículos presentes</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.celdasCarroDisponibles}">7</div>
+                <div class="kl">Celdas carro disponibles</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.celdasMotoDisponibles}">5</div>
+                <div class="kl">Celdas moto disponibles</div>
+            </div>
+            <div class="card" style="flex: 1;">
+                <div class="k" th:text="${metricas.novedadesAbiertas}">3</div>
+                <div class="kl">Novedades abiertas</div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción Administrativa -->
+        <div class="row">
+            <a th:href="@{/duenos/nuevo}" class="btn">Registrar dueño</a>
+            <a th:href="@{/vehiculos/nuevo}" class="btn">Registrar vehículo</a>
+            <a th:href="@{/pagos}" class="btn">Liquidar pago</a>
+            <a th:href="@{/celdas}" class="btn b2">Gestionar celdas</a>
+            <a th:href="@{/tarifas}" class="btn b2">Configurar tarifas</a>
+        </div>
+
+        <div class="row">
+            <!-- Tabla de Últimos Movimientos -->
+            <div class="card" style="flex: 1;">
+                <h2>Últimos movimientos</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Fecha y hora</th>
+                        <th>Tipo</th>
+                        <th>Operario</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(movimientos)}">
+                        <td colspan="4" style="text-align: center; color: #6b7280;">No hay movimientos recientes.</td>
+                    </tr>
+                    <tr th:each="mov : ${movimientos}">
+                        <td th:text="${mov.vehiculo.placa}" style="font-weight: 600;">ABC123</td>
+                        <td th:text="${#temporals.format(mov.fechaHora, 'yyyy-MM-dd HH:mm')}">2026-10-25 08:12</td>
+                        <td>
+                            <span th:if="${mov.tipoMovimiento == 'ENTRADA'}" class="tg ok">Entrada</span>
+                            <span th:if="${mov.tipoMovimiento == 'SALIDA'}" class="tg no">Salida</span>
+                        </td>
+                        <td th:text="${mov.usuario.username}">m.rios</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabla de Novedades Recientes -->
+            <div class="card" style="flex: 1;">
+                <h2>Novedades recientes</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Tipo</th>
+                        <th>Severidad</th>
+                        <th>Estado</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(novedades)}">
+                        <td colspan="4" style="text-align: center; color: #6b7280;">No hay novedades registradas.</td>
+                    </tr>
+                    <tr th:each="nov : ${novedades}">
+                        <td th:text="${nov.vehiculo.placa}" style="font-weight: 600;">ABC123</td>
+                        <td th:text="${nov.tipoNovedad}">RAYON</td>
+                        <td>
+                            <span th:if="${nov.nivelSeveridad == 'BAJA'}" class="tg ok">Baja</span>
+                            <span th:if="${nov.nivelSeveridad == 'MEDIA'}" class="tg wr">Media</span>
+                            <span th:if="${nov.nivelSeveridad == 'ALTA'}" class="tg er">Alta</span>
+                        </td>
+                        <td>
+                            <span th:if="${nov.estadoNovedad == 'ABIERTA'}" class="tg wr">Abierta</span>
+                            <span th:if="${nov.estadoNovedad == 'ATENDIDA'}" class="tg i">Atendida</span>
+                            <span th:if="${nov.estadoNovedad == 'CERRADA'}" class="tg ok">Cerrada</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
