@@ -213,3 +213,4 @@ class Iteracion2ServiciosTest {
         assertThrows(IllegalStateException.class, () -> usuarioService.actualizarUsuario(unicoAdminActivo.getId(), editarDTO, "otro_usuario"));
     }
 }
+

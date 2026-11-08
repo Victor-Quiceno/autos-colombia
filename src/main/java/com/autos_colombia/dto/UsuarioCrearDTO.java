@@ -31,3 +31,4 @@ public class UsuarioCrearDTO {
     @NotBlank(message = "Debe confirmar la contraseña")
     private String confirmPassword;
 }
+

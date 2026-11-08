@@ -167,3 +167,44 @@ autos-colombia/
 3. **Validación de Presencia Física:** El sistema rechaza intentos de registrar la entrada de un vehículo cuyo estado ya figure como `PRESENTE`, o la salida de un vehículo en estado `AUSENTE`.
 4. **Suspensión en Cascada por Mora:** Si un cliente supera su fecha límite de corte sin registrar el pago de su mensualidad, el proceso automático suspende su cuenta (`INACTIVO`) e inhabilita inmediatamente todos sus vehículos asociados, impidiendo su acceso físico al parqueadero.
 5. **Reactivación por Pago:** Al registrar exitosamente un pago, el sistema renueva la fecha de corte agregando un mes calendario y reactiva automáticamente tanto al cliente como a todos sus vehículos vinculados.
+
+---
+
+## 9. Iteración 2: Gestión de Usuarios y Gestión de Celdas
+
+Esta versión incorpora la **Iteración 2** de la Evidencia de Aprendizaje 2 (EA2), centrada en el control de acceso, gestión de clientes (dueños), vehículos, celdas y usuarios del sistema.
+
+### Historias de Usuario Cubiertas
+* **HU01 - Autenticación y control de acceso:** Inicio de sesión seguro con Spring Security 6, encriptación BCrypt, mensaje genérico de error y control 403.
+* **HU02 - Registro y vinculación de dueños:** Registro obligatorio con fecha de corte inicial a 1 mes, documento y correo únicos. Edición restringida a `ROLE_ADMIN`.
+* **HU03 - Registro de vehículos y celda exclusiva:** Asignación atómica de celda disponible por tipo (`CARRO`/`MOTO`), estado inicial `ACTIVO` y presencia `AUSENTE`.
+* **HU07 - Gestión y parametrización de celdas:** Creación de celdas, filtros dinámicos por tipo y estado, y bloqueo de mantenimiento si el vehículo está `PRESENTE`.
+* **HU10 - Administración con borrado lógico:** Inhabilitación de vehículos liberando celda (`id_celda` $\rightarrow$ `null`), inhabilitación de dueños en cascada atómica y reactivación independiente con selección de nueva celda disponible.
+* **HU13 - Gestión de usuarios del sistema (Nuevo):** Módulo `/admin/usuarios` exclusivo para administradores, con listado por pestañas (Activos/Inactivos), creación con validación de contraseña $\ge 8$ caracteres, cifrado BCrypt, restablecimiento de contraseña, y restricciones de seguridad: impedimento de autoinhabilitación y protección del último administrador activo.
+
+### Usuarios de Prueba Precargados
+
+| Usuario | Contraseña | Rol | Descripción |
+| :--- | :--- | :--- | :--- |
+| `admin` | `admin123` | `ROLE_ADMIN` | Administrador principal |
+| `admin01` | `admin123` | `ROLE_ADMIN` | Administrador secundario |
+| `operario` | `operario123` | `ROLE_OPERARIO` | Operario general |
+| `m.rios` | `operario123` | `ROLE_OPERARIO` | Operario de turno |
+| `c.diaz` | `operario123` | `ROLE_OPERARIO` | Operaria de turno |
+
+### Ejecución de Pruebas Unitarias y de Integración
+Para ejecutar la suite completa de pruebas de la Iteración 2:
+```bash
+# En Windows:
+mvnw.cmd test -Dtest=Iteracion2ServiciosTest
+
+# En Linux / macOS:
+./mvnw test -Dtest=Iteracion2ServiciosTest
+```
+
+### Ejecución de la Aplicación
+```bash
+# Iniciar el servidor web:
+mvnw.cmd spring-boot:run
+```
+La aplicación estará disponible en `http://localhost:8080`.

@@ -22,3 +22,4 @@ public class UsuarioPasswordDTO {
     @NotBlank(message = "Debe confirmar la nueva contraseña")
     private String confirmPassword;
 }
+

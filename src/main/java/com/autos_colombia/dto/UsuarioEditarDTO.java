@@ -26,3 +26,4 @@ public class UsuarioEditarDTO {
 
     private String estado;
 }
+
