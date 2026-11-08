@@ -21,6 +21,7 @@ public class DataInitializer implements CommandLineRunner {
     private final MovimientoRepository movimientoRepository;
     private final NovedadRepository novedadRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public DataInitializer(UsuarioRepository usuarioRepository,
                            TarifaRepository tarifaRepository,
@@ -29,7 +30,8 @@ public class DataInitializer implements CommandLineRunner {
                            VehiculoRepository vehiculoRepository,
                            MovimientoRepository movimientoRepository,
                            NovedadRepository novedadRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.usuarioRepository = usuarioRepository;
         this.tarifaRepository = tarifaRepository;
         this.celdaRepository = celdaRepository;
@@ -38,10 +40,20 @@ public class DataInitializer implements CommandLineRunner {
         this.movimientoRepository = movimientoRepository;
         this.novedadRepository = novedadRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
+        // T1 Migración H2: vehiculos.id_celda pasa a nullable preservando datos existentes
+        try {
+            jdbcTemplate.execute("ALTER TABLE vehiculos ALTER COLUMN id_celda DROP NOT NULL");
+        } catch (Exception e1) {
+            try {
+                jdbcTemplate.execute("ALTER TABLE vehiculos ALTER COLUMN id_celda SET NULL");
+            } catch (Exception ignored) {
+            }
+        }
         // 1. Usuarios iniciales
         if (usuarioRepository.count() == 0) {
             Usuario adminPrincipal = Usuario.builder()

@@ -30,10 +30,8 @@ public class VehiculoDTO {
     @NotBlank(message = "El color es obligatorio")
     private String color;
 
-    @NotNull(message = "Debe asociar un dueño")
     private Long idDueno;
 
-    @NotNull(message = "Debe asignar una celda")
     private Long idCelda;
 
     private LocalDate fechaVinculacion;

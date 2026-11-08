@@ -49,6 +49,6 @@ public class Vehiculo {
     private Dueno dueno;
 
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_celda", nullable = false, unique = true)
+    @JoinColumn(name = "id_celda", nullable = true, unique = true)
     private Celda celda;
 }
