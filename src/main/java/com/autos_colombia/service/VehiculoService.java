@@ -106,6 +106,13 @@ public class VehiculoService {
 
     public void inhabilitarVehiculo(Long id) {
         Vehiculo vehiculo = obtenerPorId(id);
+
+        // HU10 Criterio 5 / T2: Bloqueo si el vehículo está Presente
+        if ("PRESENTE".equalsIgnoreCase(vehiculo.getEstadoPresencia())) {
+            throw new IllegalStateException("No se puede inhabilitar el vehículo con placa " + vehiculo.getPlaca() +
+                    ": se encuentra Presente en las instalaciones.");
+        }
+
         vehiculo.setEstado("INACTIVO");
 
         // HU10 Criterio 3: Al inhabilitar un vehículo permanentemente, la celda asociada pasa a Disponible

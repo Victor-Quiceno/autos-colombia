@@ -56,15 +56,15 @@ public class CeldaService {
     public void cambiarEstado(Long idCelda, String nuevoEstado) {
         Celda celda = obtenerPorId(idCelda);
 
-        // HU07 Criterio 3: Impide poner en mantenimiento si el vehículo está Presente
-        if ("MANTENIMIENTO".equalsIgnoreCase(nuevoEstado)) {
+        // HU07 Criterio 3 / T2: Impide cambiar estado, reasignar o poner en mantenimiento si el vehículo está Presente
+        if (!celda.getEstadoCelda().equalsIgnoreCase(nuevoEstado)) {
             vehiculoRepository.findAll().stream()
                     .filter(v -> v.getCelda() != null && v.getCelda().getId().equals(idCelda))
                     .findFirst()
                     .ifPresent(v -> {
                         if ("PRESENTE".equalsIgnoreCase(v.getEstadoPresencia())) {
                             throw new IllegalStateException("No se puede poner la celda " + celda.getCodigoCelda() +
-                                    " en mantenimiento ni reasignarla: el vehículo " + v.getPlaca() + " está Presente.");
+                                    " en mantenimiento ni modificar su estado: el vehículo " + v.getPlaca() + " está Presente.");
                         }
                     });
         }

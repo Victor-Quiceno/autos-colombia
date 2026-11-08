@@ -76,11 +76,20 @@ public class DuenoService {
 
     public void inhabilitarDueno(Long id) {
         Dueno dueno = obtenerPorId(id);
+        List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(id);
+
+        // HU10 Criterio 5 / T2: Bloqueo si algún vehículo del dueño se encuentra Presente
+        for (Vehiculo v : vehiculos) {
+            if ("PRESENTE".equalsIgnoreCase(v.getEstadoPresencia())) {
+                throw new IllegalStateException("No se puede inhabilitar al cliente " + dueno.getNombreCompleto() +
+                        ": el vehículo asociado " + v.getPlaca() + " se encuentra Presente en el parqueadero.");
+            }
+        }
+
         dueno.setEstado("INACTIVO");
         duenoRepository.save(dueno);
 
         // RF6: En caso de que el dueño pase a inactivo, el mismo estado se aplicará a todos los vehículos asociados
-        List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(id);
         for (Vehiculo v : vehiculos) {
             v.setEstado("INACTIVO");
             vehiculoRepository.save(v);
