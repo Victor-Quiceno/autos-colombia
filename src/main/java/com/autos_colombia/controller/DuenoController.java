@@ -21,7 +21,9 @@ public class DuenoController {
     }
 
     @GetMapping
-    public String listar(@RequestParam(value = "filtro", defaultValue = "TODOS") String filtro, Model model) {
+    public String listar(@RequestParam(value = "filtro", defaultValue = "TODOS") String filtro,
+                         @RequestParam(value = "inhabilitarId", required = false) Long inhabilitarId,
+                         Model model) {
         if ("ACTIVO".equalsIgnoreCase(filtro)) {
             model.addAttribute("duenos", duenoService.obtenerPorEstado("ACTIVO"));
         } else if ("INACTIVO".equalsIgnoreCase(filtro)) {
@@ -30,6 +32,20 @@ public class DuenoController {
             model.addAttribute("duenos", duenoService.obtenerTodos());
         }
         model.addAttribute("filtroActual", filtro.toUpperCase());
+
+        if (inhabilitarId != null) {
+            try {
+                com.autos_colombia.model.Dueno dConfirmar = duenoService.obtenerPorId(inhabilitarId);
+                java.util.List<com.autos_colombia.model.Vehiculo> vConfirmar = duenoService.obtenerVehiculosDeDueno(inhabilitarId);
+                boolean tienePresente = vConfirmar.stream()
+                        .anyMatch(v -> "PRESENTE".equalsIgnoreCase(v.getEstadoPresencia()));
+                model.addAttribute("duenoConfirmar", dConfirmar);
+                model.addAttribute("vehiculosConfirmar", vConfirmar);
+                model.addAttribute("tienePresente", tienePresente);
+            } catch (Exception ignored) {
+            }
+        }
+
         model.addAttribute("moduloActivo", "duenos");
         return "duenos/lista";
     }

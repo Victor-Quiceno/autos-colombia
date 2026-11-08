@@ -25,53 +25,79 @@
         <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
         <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
 
-        <div class="card">
-            <table>
-                <thead>
-                <tr>
-                    <th>Documento</th>
-                    <th>Cliente</th>
-                    <th>Contacto</th>
-                    <th>Corte mensual</th>
-                    <th>Vehículos</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${#lists.isEmpty(duenos)}">
-                    <td colspan="7" style="text-align: center; color: #6b7280;">No se encontraron clientes registrados bajo este filtro.</td>
-                </tr>
-                <tr th:each="d : ${duenos}">
-                    <td th:text="${d.tipoDocumento + ' ' + d.numeroDocumento}"></td>
-                    <td th:text="${d.nombreCompleto}" style="font-weight: 600;"></td>
-                    <td>
-                        <div th:text="${d.telefono}"></div>
-                        <div th:text="${d.correo}" style="color: #6b7280; font-size: 12px;"></div>
-                    </td>
-                    <td th:text="${d.fechaCorte}"></td>
-                    <td th:text="${d.vehiculos.size()} + ' asociados'"></td>
-                    <td>
-                        <span th:if="${d.estado == 'ACTIVO'}" class="tg ok">Activo</span>
-                        <span th:if="${d.estado == 'INACTIVO'}" class="tg no">Inactivo</span>
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 6px;">
-                            <a th:href="@{/duenos/editar/{id}(id=${d.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
+        <div class="row" style="align-items: flex-start;">
+            <div class="card" style="flex: 2;">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Documento</th>
+                        <th>Cliente</th>
+                        <th>Contacto</th>
+                        <th>Corte mensual</th>
+                        <th>Vehículos</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(duenos)}">
+                        <td colspan="7" style="text-align: center; color: #6b7280;">No se encontraron clientes registrados bajo este filtro.</td>
+                    </tr>
+                    <tr th:each="d : ${duenos}">
+                        <td th:text="${d.tipoDocumento + ' ' + d.numeroDocumento}"></td>
+                        <td th:text="${d.nombreCompleto}" style="font-weight: 600;"></td>
+                        <td>
+                            <div th:text="${d.telefono}"></div>
+                            <div th:text="${d.correo}" style="color: #6b7280; font-size: 12px;"></div>
+                        </td>
+                        <td th:text="${d.fechaCorte}"></td>
+                        <td th:text="${d.vehiculos.size()} + ' asociados'"></td>
+                        <td>
+                            <span th:if="${d.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                            <span th:if="${d.estado == 'INACTIVO'}" class="tg no">Inactivo</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <a th:href="@{/duenos/editar/{id}(id=${d.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
 
-                            <span sec:authorize="hasRole('ADMIN')">
-                                <form th:if="${d.estado == 'ACTIVO'}" th:action="@{/duenos/inhabilitar/{id}(id=${d.id})}" method="post" style="display: inline;" onsubmit="return confirm('¿Inhabilitar dueño y sus vehículos asociados por borrado lógico?');">
-                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</button>
-                                </form>
-                                <form th:if="${d.estado == 'INACTIVO'}" th:action="@{/duenos/activar/{id}(id=${d.id})}" method="post" style="display: inline;">
-                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</button>
-                                </form>
-                            </span>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                                <span sec:authorize="hasRole('ADMIN')">
+                                    <a th:if="${d.estado == 'ACTIVO'}" th:href="@{/duenos(filtro=${filtroActual}, inhabilitarId=${d.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</a>
+                                    <form th:if="${d.estado == 'INACTIVO'}" th:action="@{/duenos/activar/{id}(id=${d.id})}" method="post" style="display: inline;">
+                                        <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</button>
+                                    </form>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Panel de Confirmación de Inhabilitación en Cascada (HU10 / T4) -->
+            <div class="card" th:if="${duenoConfirmar != null}" style="flex: 1; border: 1px solid #fecaca; background: #fffaf0;">
+                <h2 th:text="'¿Inhabilitar a ' + ${duenoConfirmar.nombreCompleto} + '?'" style="color: #991b1b; font-size: 16px;"></h2>
+                <p style="font-size: 13px; color: #4b5563; margin-top: 6px;">
+                    Se aplicará borrado lógico al dueño y a sus <strong th:text="${#lists.size(vehiculosConfirmar)}"></strong> vehículo(s) asociados:
+                </p>
+
+                <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px; color: #374151;">
+                    <li th:if="${#lists.isEmpty(vehiculosConfirmar)}">Sin vehículos vinculados.</li>
+                    <li th:each="v : ${vehiculosConfirmar}">
+                        <strong th:text="${v.placa}">ABC123</strong>
+                        <span th:if="${v.celda != null}" th:text="' → celda ' + ${v.celda.codigoCelda} + ' pasará a Disponible'"></span>
+                        <span th:unless="${v.celda != null}"> → sin celda asignada</span>
+                    </li>
+                </ul>
+
+                <div class="al e" th:if="${tienePresente}" style="margin: 10px 0; font-size: 12px;">
+                    No se puede inhabilitar: al menos un vehículo asociado se encuentra Presente en el parqueadero.
+                </div>
+
+                <form th:action="@{/duenos/inhabilitar/{id}(id=${duenoConfirmar.id})}" method="post" style="display: flex; gap: 8px; margin-top: 14px;">
+                    <button type="submit" class="btn" style="background: #dc2626; color: white;" th:disabled="${tienePresente}">Inhabilitar</button>
+                    <a th:href="@{/duenos(filtro=${filtroActual})}" class="btn b2">Cancelar</a>
+                </form>
+            </div>
         </div>
     </div>
 </div>

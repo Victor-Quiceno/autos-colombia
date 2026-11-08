@@ -17,10 +17,19 @@ public class DuenoService {
 
     private final DuenoRepository duenoRepository;
     private final VehiculoRepository vehiculoRepository;
+    private final CeldaRepository celdaRepository;
 
-    public DuenoService(DuenoRepository duenoRepository, VehiculoRepository vehiculoRepository) {
+    public DuenoService(DuenoRepository duenoRepository,
+                        VehiculoRepository vehiculoRepository,
+                        CeldaRepository celdaRepository) {
         this.duenoRepository = duenoRepository;
         this.vehiculoRepository = vehiculoRepository;
+        this.celdaRepository = celdaRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Vehiculo> obtenerVehiculosDeDueno(Long idDueno) {
+        return vehiculoRepository.findByDuenoId(idDueno);
     }
 
     @Transactional(readOnly = true)
@@ -89,9 +98,15 @@ public class DuenoService {
         dueno.setEstado("INACTIVO");
         duenoRepository.save(dueno);
 
-        // RF6: En caso de que el dueño pase a inactivo, el mismo estado se aplicará a todos los vehículos asociados
+        // T4 Cascada: Por cada vehículo: INACTIVO + celda DISPONIBLE + id_celda null
         for (Vehiculo v : vehiculos) {
             v.setEstado("INACTIVO");
+            if (v.getCelda() != null) {
+                Celda c = v.getCelda();
+                c.setEstadoCelda("DISPONIBLE");
+                celdaRepository.save(c);
+                v.setCelda(null);
+            }
             vehiculoRepository.save(v);
         }
     }
