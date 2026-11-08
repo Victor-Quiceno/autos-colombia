@@ -115,11 +115,12 @@ public class VehiculoService {
 
         vehiculo.setEstado("INACTIVO");
 
-        // HU10 Criterio 3: Al inhabilitar un vehículo permanentemente, la celda asociada pasa a Disponible
+        // HU10 Criterio 3 / T3: Al inhabilitar un vehículo, la celda pasa a Disponible y vehiculo.id_celda pasa a null
         if (vehiculo.getCelda() != null) {
             Celda celda = vehiculo.getCelda();
             celda.setEstadoCelda("DISPONIBLE");
             celdaRepository.save(celda);
+            vehiculo.setCelda(null);
         }
 
         vehiculoRepository.save(vehiculo);
