@@ -63,14 +63,14 @@
                         </td>
                         <td>
                             <div style="display: flex; gap: 6px;">
-                                <a th:href="@{/vehiculos/editar/{id}(id=${v.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
-
                                 <span sec:authorize="hasRole('ADMIN')">
+                                    <a th:href="@{/vehiculos/editar/{id}(id=${v.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
                                     <form th:if="${v.estado == 'ACTIVO'}" th:action="@{/vehiculos/inhabilitar/{id}(id=${v.id})}" method="post" style="display: inline;" onsubmit="return confirm('¿Inhabilitar vehículo por borrado lógico? Su celda pasará a Disponible.');">
                                         <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</button>
                                     </form>
                                     <a th:if="${v.estado == 'INACTIVO'}" th:href="@{/vehiculos(filtro=${filtroActual}, reactivarId=${v.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</a>
                                 </span>
+                                <span sec:authorize="hasRole('OPERARIO')" style="color: #9ca3af; font-size: 12px; padding: 4px 0;">Solo lectura</span>
                             </div>
                         </td>
                     </tr>
