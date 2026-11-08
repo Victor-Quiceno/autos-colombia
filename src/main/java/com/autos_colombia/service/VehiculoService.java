@@ -126,14 +126,35 @@ public class VehiculoService {
         vehiculoRepository.save(vehiculo);
     }
 
-    public void activarVehiculo(Long id) {
+    public void activarVehiculo(Long id, Long idCelda) {
         Vehiculo vehiculo = obtenerPorId(id);
-        vehiculo.setEstado("ACTIVO");
-        if (vehiculo.getCelda() != null) {
-            Celda celda = vehiculo.getCelda();
-            celda.setEstadoCelda("ASIGNADA");
-            celdaRepository.save(celda);
+
+        // HU10 Criterio 6 / T5: No reactivar vehículo si su dueño está INACTIVO
+        if (vehiculo.getDueno() == null || !"ACTIVO".equalsIgnoreCase(vehiculo.getDueno().getEstado())) {
+            throw new IllegalStateException("No se puede reactivar el vehículo " + vehiculo.getPlaca() +
+                    ": el dueño asociado se encuentra Inactivo.");
         }
+
+        if (idCelda == null) {
+            throw new IllegalArgumentException("Debe seleccionar una celda disponible para reactivar el vehículo.");
+        }
+
+        Celda celda = celdaRepository.findById(idCelda)
+                .orElseThrow(() -> new IllegalArgumentException("Celda no encontrada"));
+
+        if (!"DISPONIBLE".equalsIgnoreCase(celda.getEstadoCelda())) {
+            throw new IllegalStateException("La celda " + celda.getCodigoCelda() + " no está Disponible.");
+        }
+
+        if (!celda.getTipoPermitido().equalsIgnoreCase(vehiculo.getTipoVehiculo())) {
+            throw new IllegalArgumentException("La celda " + celda.getCodigoCelda() + " solo admite vehículos tipo " + celda.getTipoPermitido());
+        }
+
+        celda.setEstadoCelda("ASIGNADA");
+        celdaRepository.save(celda);
+
+        vehiculo.setCelda(celda);
+        vehiculo.setEstado("ACTIVO");
         vehiculoRepository.save(vehiculo);
     }
 }

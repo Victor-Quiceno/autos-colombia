@@ -115,11 +115,6 @@ public class DuenoService {
         Dueno dueno = obtenerPorId(id);
         dueno.setEstado("ACTIVO");
         duenoRepository.save(dueno);
-
-        List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(id);
-        for (Vehiculo v : vehiculos) {
-            v.setEstado("ACTIVO");
-            vehiculoRepository.save(v);
-        }
+        // HU10 Criterio 6 / T5: Reactivar un dueño NO reactiva sus vehículos automáticamente
     }
 }

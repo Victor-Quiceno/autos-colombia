@@ -29,7 +29,9 @@ public class VehiculoController {
     }
 
     @GetMapping
-    public String listar(@RequestParam(value = "filtro", defaultValue = "TODOS") String filtro, Model model) {
+    public String listar(@RequestParam(value = "filtro", defaultValue = "TODOS") String filtro,
+                         @RequestParam(value = "reactivarId", required = false) Long reactivarId,
+                         Model model) {
         if ("ACTIVO".equalsIgnoreCase(filtro)) {
             model.addAttribute("vehiculos", vehiculoService.obtenerPorEstado("ACTIVO"));
         } else if ("INACTIVO".equalsIgnoreCase(filtro)) {
@@ -38,6 +40,16 @@ public class VehiculoController {
             model.addAttribute("vehiculos", vehiculoService.obtenerTodos());
         }
         model.addAttribute("filtroActual", filtro.toUpperCase());
+
+        if (reactivarId != null) {
+            try {
+                Vehiculo vReactivar = vehiculoService.obtenerPorId(reactivarId);
+                model.addAttribute("vReactivar", vReactivar);
+                model.addAttribute("celdasDisponibles", celdaService.obtenerDisponiblesPorTipo(vReactivar.getTipoVehiculo()));
+            } catch (Exception ignored) {
+            }
+        }
+
         model.addAttribute("moduloActivo", "vehiculos");
         return "vehiculos/lista";
     }
@@ -138,10 +150,12 @@ public class VehiculoController {
     }
 
     @PostMapping("/activar/{id}")
-    public String activar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String activar(@PathVariable Long id,
+                          @RequestParam("idCelda") Long idCelda,
+                          RedirectAttributes redirectAttributes) {
         try {
-            vehiculoService.activarVehiculo(id);
-            redirectAttributes.addFlashAttribute("mensajeExito", "Vehículo reactivado exitosamente.");
+            vehiculoService.activarVehiculo(id, idCelda);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Vehículo reactivado exitosamente con celda asignada.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", e.getMessage());
         }
