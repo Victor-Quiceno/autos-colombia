@@ -1,8 +1,10 @@
 package com.autos_colombia.service;
 
 import com.autos_colombia.dto.DuenoDTO;
+import com.autos_colombia.model.Celda;
 import com.autos_colombia.model.Dueno;
 import com.autos_colombia.model.Vehiculo;
+import com.autos_colombia.repository.CeldaRepository;
 import com.autos_colombia.repository.DuenoRepository;
 import com.autos_colombia.repository.VehiculoRepository;
 import org.springframework.stereotype.Service;

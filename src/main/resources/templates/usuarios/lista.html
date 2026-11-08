@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: header('HU13 · Usuarios del sistema')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('usuarios')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Usuarios del sistema</h1>
+        <p class="sub">Control de credenciales, roles y autorizaciones</p>
+
+        <div class="row" style="justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 8px;">
+                <a th:href="@{/admin/usuarios(filtro='TODOS')}" th:class="${filtroActual == 'TODOS'} ? 'btn' : 'btn b2'">Todos</a>
+                <a th:href="@{/admin/usuarios(filtro='ACTIVO')}" th:class="${filtroActual == 'ACTIVO'} ? 'btn' : 'btn b2'">Activos</a>
+                <a th:href="@{/admin/usuarios(filtro='INACTIVO')}" th:class="${filtroActual == 'INACTIVO'} ? 'btn' : 'btn b2'">Inactivos</a>
+            </div>
+
+            <a th:href="@{/admin/usuarios/nuevo}" class="btn">Nuevo usuario</a>
+        </div>
+
+        <div class="al s" th:if="${mensajeExito != null}" th:text="${mensajeExito}"></div>
+        <div class="al e" th:if="${mensajeError != null}" th:text="${mensajeError}"></div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre completo</th>
+                    <th>Rol asignado</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(usuarios)}">
+                    <td colspan="5" style="text-align: center; color: #6b7280;">No se encontraron usuarios bajo este filtro.</td>
+                </tr>
+                <tr th:each="u : ${usuarios}">
+                    <td th:text="${u.username}" style="font-weight: 700;">admin</td>
+                    <td th:text="${u.nombreCompleto}">Administrador General</td>
+                    <td>
+                        <span th:if="${u.rol == 'ROLE_ADMIN'}" class="tg wr">Administrador</span>
+                        <span th:if="${u.rol == 'ROLE_OPERARIO'}" class="tg ok">Operario</span>
+                    </td>
+                    <td>
+                        <span th:if="${u.estado == 'ACTIVO'}" class="tg ok">Activo</span>
+                        <span th:if="${u.estado == 'INACTIVO'}" class="tg no">Inactivo</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <a th:href="@{/admin/usuarios/editar/{id}(id=${u.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Editar</a>
+                            <a th:href="@{/admin/usuarios/restablecer/{id}(id=${u.id})}" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px;">Restablecer clave</a>
+
+                            <!-- Si es el usuario en sesión: deshabilitar con etiqueta Tú -->
+                            <span th:if="${u.username == usernameActual}" style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 4px 8px; background: #e5e7eb; border-radius: 4px;">Tú</span>
+
+                            <!-- Si no es el usuario en sesión -->
+                            <span th:unless="${u.username == usernameActual}">
+                                <form th:if="${u.estado == 'ACTIVO'}" th:action="@{/admin/usuarios/inhabilitar/{id}(id=${u.id})}" method="post" style="display: inline;" onsubmit="return confirm('¿Inhabilitar usuario? Perderá acceso al sistema conservando su historial.');">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #b42318; border-color: #fcdcdc;">Inhabilitar</button>
+                                </form>
+                                <form th:if="${u.estado == 'INACTIVO'}" th:action="@{/admin/usuarios/activar/{id}(id=${u.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn b2" style="min-height: 28px; padding: 4px 10px; font-size: 12px; color: #16a34a; border-color: #d1f0dc;">Reactivar</button>
+                                </form>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

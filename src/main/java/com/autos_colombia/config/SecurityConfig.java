@@ -77,7 +77,7 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/login", "/acceso-denegado").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         // Rutas exclusivas para ADMIN
-                        .requestMatchers("/panel/administrativo", "/tarifas/**", "/celdas/**", "/pagos/**").hasRole("ADMIN")
+                        .requestMatchers("/panel/administrativo", "/admin/**", "/tarifas/**", "/celdas/**", "/pagos/**").hasRole("ADMIN")
                         .requestMatchers("/duenos/inhabilitar/**", "/vehiculos/inhabilitar/**", "/duenos/activar/**", "/vehiculos/activar/**").hasRole("ADMIN")
                         // Rutas compartidas (ADMIN y OPERARIO)
                         .requestMatchers("/panel/operativo", "/movimientos/**", "/novedades/**", "/duenos/**", "/vehiculos/**").hasAnyRole("ADMIN", "OPERARIO")

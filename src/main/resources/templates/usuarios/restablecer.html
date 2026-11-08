@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU13 · Restablecer contraseña')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('usuarios')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Restablecer contraseña</h1>
+        <p class="sub">Actualización segura de credencial de acceso</p>
+
+        <div class="row">
+            <div class="card" style="flex: 2;">
+                <h2 th:text="'Nueva contraseña para ' + ${usuario.username}"></h2>
+
+                <div class="al e" th:if="${error != null}" th:text="${error}"></div>
+
+                <form th:action="@{/admin/usuarios/restablecer/{id}(id=${usuario.id})}" th:object="${passwordDTO}" method="post">
+                    <input type="hidden" th:field="*{id}">
+                    <input type="hidden" th:field="*{username}">
+
+                    <div class="c2">
+                        <label>Nueva contraseña (mínimo 8 caracteres)
+                            <input class="in" type="password" th:field="*{password}" placeholder="••••••••" required autocomplete="new-password">
+                            <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+
+                        <label>Confirmar nueva contraseña
+                            <input class="in" type="password" th:field="*{confirmPassword}" placeholder="••••••••" required autocomplete="new-password">
+                            <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" style="color: #b42318; font-size: 12px;"></span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn">Restablecer contraseña</button>
+                        <a th:href="@{/admin/usuarios}" class="btn b2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card" style="flex: 1;">
+                <h2>Seguridad</h2>
+                <div class="al s">La nueva contraseña se cifra inmediatamente con BCrypt</div>
+                <div class="al i">El usuario podrá iniciar sesión con su nueva clave a partir del próximo intento</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
