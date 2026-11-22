@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: header('HU08 · Historial de pagos')}"></head>
+<head th:replace="~{fragments/layout :: header('HU14 · Historial de pagos')}"></head>
 <body>
 
 <div class="layout-wrapper">
@@ -10,10 +10,57 @@
         <div th:replace="~{fragments/layout :: userbar}"></div>
 
         <h1>Historial de transacciones de mensualidad</h1>
-        <p class="sub">Auditoría de pagos procesados mediante la pasarela</p>
+        <p class="sub">Auditoría y filtros de pagos procesados mediante la pasarela (HU14)</p>
 
-        <div class="row" style="justify-content: space-between; align-items: center;">
+        <!-- Filtros de búsqueda -->
+        <div class="card" style="margin-bottom: 20px;">
+            <form method="get" th:action="@{/pagos/historial}">
+                <div class="row" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label>Cliente / Dueño
+                            <select class="in" name="idDueno">
+                                <option value="">-- Todos los dueños --</option>
+                                <option th:each="d : ${duenos}"
+                                        th:value="${d.id}"
+                                        th:text="${d.nombreCompleto + ' (' + d.numeroDocumento + ')'}"
+                                        th:selected="${d.id == idDuenoSeleccionado}"></option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div style="width: 170px;">
+                        <label>Estado del pago
+                            <select class="in" name="estadoPago">
+                                <option value="">-- Todos --</option>
+                                <option value="APROBADO" th:selected="${'APROBADO' == estadoPagoSeleccionado}">Aprobado</option>
+                                <option value="RECHAZADO" th:selected="${'RECHAZADO' == estadoPagoSeleccionado}">Rechazado</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div style="width: 160px;">
+                        <label>Fecha desde
+                            <input type="date" class="in" name="fechaInicio" th:value="${fechaInicioSeleccionada}">
+                        </label>
+                    </div>
+
+                    <div style="width: 160px;">
+                        <label>Fecha hasta
+                            <input type="date" class="in" name="fechaFin" th:value="${fechaFinSeleccionada}">
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button type="submit" class="btn">Filtrar</button>
+                        <a th:href="@{/pagos/historial}" class="btn b2">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row" style="justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <a th:href="@{/pagos}" class="btn">Procesar nuevo pago</a>
+            <a th:href="@{/pagos/estado-cuenta}" class="btn b2">Ver estado de cuenta general</a>
         </div>
 
         <div class="card">
@@ -31,7 +78,7 @@
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(pagos)}">
-                    <td colspan="7" style="text-align: center; color: #6b7280;">No se registran pagos en el histórico.</td>
+                    <td colspan="7" style="text-align: center; color: #6b7280;">No se encontraron pagos con los criterios seleccionados.</td>
                 </tr>
                 <tr th:each="p : ${pagos}">
                     <td th:text="${p.referenciaTransaccion}" style="font-weight: 700; color: #0e7490;"></td>

@@ -46,6 +46,77 @@ public class PagoService {
         return pagoRepository.findAllByOrderByFechaPagoDesc();
     }
 
+    @Transactional(readOnly = true)
+    public List<Pago> filtrarHistorial(Long idDueno, String estadoPago, LocalDate fechaInicio, LocalDate fechaFin) {
+        return pagoRepository.findAllByOrderByFechaPagoDesc().stream()
+                .filter(p -> idDueno == null || (p.getDueno() != null && idDueno.equals(p.getDueno().getId())))
+                .filter(p -> estadoPago == null || estadoPago.isBlank() || estadoPago.equalsIgnoreCase(p.getEstadoPago()))
+                .filter(p -> fechaInicio == null || !p.getFechaPago().toLocalDate().isBefore(fechaInicio))
+                .filter(p -> fechaFin == null || !p.getFechaPago().toLocalDate().isAfter(fechaFin))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.autos_colombia.dto.EstadoCuentaDTO> obtenerEstadosCuenta() {
+        LocalDate hoy = LocalDate.now();
+        List<Dueno> duenos = duenoRepository.findAll();
+
+        return duenos.stream().map(d -> {
+            LocalDate corte = d.getFechaCorte();
+            long diasRestantes = java.time.temporal.ChronoUnit.DAYS.between(hoy, corte);
+
+            BigDecimal monto = BigDecimal.ZERO;
+            int vehiculosFacturables = 0;
+            try {
+                LiquidacionMensualidad liq = calcularLiquidacion(d.getId());
+                monto = liq.totalPagar();
+                vehiculosFacturables = liq.totalVehiculos();
+            } catch (Exception ignored) {
+                // Si no tiene facturables o falta tarifa, monto es 0
+            }
+
+            Pago ultimoAprobado = pagoRepository.findFirstByDuenoIdAndEstadoPagoOrderByFechaPagoDesc(d.getId(), "APROBADO")
+                    .orElse(null);
+
+            // Estado de cuenta:
+            // Al día: ACTIVO y faltan más de 3 días (diasRestantes > 3)
+            // Por vencer: ACTIVO y faltan 0–3 días (diasRestantes >= 0 && diasRestantes <= 3)
+            // En mora: INACTIVO y fechaCorte < hoy (diasRestantes < 0)
+            // Inactivo: INACTIVO con corte no vencido (diasRestantes >= 0, p. ej. inhabilitado manualmente)
+            String estadoCuenta;
+            String badgeClass;
+
+            if ("ACTIVO".equalsIgnoreCase(d.getEstado())) {
+                if (diasRestantes > 3) {
+                    estadoCuenta = "Al día";
+                    badgeClass = "ok";
+                } else {
+                    estadoCuenta = "Por vencer";
+                    badgeClass = "wr";
+                }
+            } else {
+                if (corte.isBefore(hoy)) {
+                    estadoCuenta = "En mora";
+                    badgeClass = "er";
+                } else {
+                    estadoCuenta = "Inactivo";
+                    badgeClass = "no";
+                }
+            }
+
+            return com.autos_colombia.dto.EstadoCuentaDTO.builder()
+                    .dueno(d)
+                    .fechaCorte(corte)
+                    .diasRestantes(diasRestantes)
+                    .montoPagar(monto)
+                    .vehiculosFacturables(vehiculosFacturables)
+                    .ultimoPagoAprobado(ultimoAprobado)
+                    .estadoCuenta(estadoCuenta)
+                    .estadoClaseBadge(badgeClass)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
     // ── Record de liquidación ─────────────────────────────────────────────────
     public record LiquidacionMensualidad(
             Dueno dueno,

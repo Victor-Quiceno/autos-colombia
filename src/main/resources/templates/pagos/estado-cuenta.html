@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('HU14 · Estado de cuenta de clientes')}"></head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('estado-cuenta')}"></div>
+
+    <div class="mn">
+        <div th:replace="~{fragments/layout :: userbar}"></div>
+
+        <h1>Estado de cuenta de clientes</h1>
+        <p class="sub">Control de vencimientos, mora y liquidación mensual por cliente</p>
+
+        <div class="row" style="justify-content: flex-end; margin-bottom: 12px;">
+            <a th:href="@{/pagos/historial}" class="btn b2">Ver historial de pagos</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Dueño</th>
+                    <th>Fecha de corte</th>
+                    <th>Días restantes</th>
+                    <th>Monto a pagar</th>
+                    <th>Último pago aprobado</th>
+                    <th>Estado de cuenta</th>
+                    <th>Acción</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(estadosCuenta)}">
+                    <td colspan="8" style="text-align: center; color: #6b7280;">No hay clientes registrados en el sistema.</td>
+                </tr>
+                <tr th:each="ec : ${estadosCuenta}">
+                    <td>
+                        <span th:text="${ec.dueno.tipoDocumento + ' ' + ec.dueno.numeroDocumento}" style="font-weight: 600;"></span>
+                    </td>
+                    <td>
+                        <b th:text="${ec.dueno.nombreCompleto}"></b>
+                    </td>
+                    <td th:text="${ec.fechaCorte}"></td>
+                    <td>
+                        <span th:if="${ec.diasRestantes > 3}" th:text="${ec.diasRestantes + ' días'}" style="color: #047857; font-weight: 600;"></span>
+                        <span th:if="${ec.diasRestantes >= 0 and ec.diasRestantes <= 3}" th:text="${ec.diasRestantes + ' días'}" style="color: #b45309; font-weight: 700;"></span>
+                        <span th:if="${ec.diasRestantes < 0}" th:text="${'Vencido (' + (-ec.diasRestantes) + ' días)'}" style="color: #b91c1c; font-weight: 700;"></span>
+                    </td>
+                    <td>
+                        <b th:text="${'$' + #numbers.formatDecimal(ec.montoPagar, 0, 'POINT', 0, 'POINT')}">$0</b>
+                        <span th:if="${ec.vehiculosFacturables > 0}" th:text="${' (' + ec.vehiculosFacturables + ' veh.)'}" style="font-size: 11px; color: #6b7280;"></span>
+                    </td>
+                    <td>
+                        <div th:if="${ec.ultimoPagoAprobado != null}">
+                            <span th:text="${ec.ultimoPagoAprobado.referenciaTransaccion}" style="font-size: 12px; font-weight: 600; color: #0e7490;"></span><br>
+                            <span th:text="${#temporals.format(ec.ultimoPagoAprobado.fechaPago, 'yyyy-MM-dd')}" style="font-size: 11px; color: #6b7280;"></span>
+                        </div>
+                        <span th:unless="${ec.ultimoPagoAprobado != null}" style="color: #9ca3af; font-size: 12px;">Sin pagos</span>
+                    </td>
+                    <td>
+                        <span th:class="${'tg ' + ec.estadoClaseBadge}" th:text="${ec.estadoCuenta}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/pagos(idDueno=${ec.dueno.id})}" class="btn" style="padding: 4px 12px; font-size: 12px;">Pagar</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

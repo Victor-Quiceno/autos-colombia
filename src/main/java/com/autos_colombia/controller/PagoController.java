@@ -93,10 +93,26 @@ public class PagoController {
     }
 
     @GetMapping("/historial")
-    public String historial(Model model) {
-        model.addAttribute("pagos", pagoService.obtenerTodos());
+    public String historial(@RequestParam(value = "idDueno", required = false) Long idDueno,
+                            @RequestParam(value = "estadoPago", required = false) String estadoPago,
+                            @RequestParam(value = "fechaInicio", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaInicio,
+                            @RequestParam(value = "fechaFin", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fechaFin,
+                            Model model) {
+        model.addAttribute("pagos", pagoService.filtrarHistorial(idDueno, estadoPago, fechaInicio, fechaFin));
+        model.addAttribute("duenos", duenoService.obtenerTodos());
+        model.addAttribute("idDuenoSeleccionado", idDueno);
+        model.addAttribute("estadoPagoSeleccionado", estadoPago);
+        model.addAttribute("fechaInicioSeleccionada", fechaInicio);
+        model.addAttribute("fechaFinSeleccionada", fechaFin);
         model.addAttribute("moduloActivo", "pagos");
         return "pagos/historial";
+    }
+
+    @GetMapping("/estado-cuenta")
+    public String estadoCuenta(Model model) {
+        model.addAttribute("estadosCuenta", pagoService.obtenerEstadosCuenta());
+        model.addAttribute("moduloActivo", "estado-cuenta");
+        return "pagos/estado-cuenta";
     }
 
     @GetMapping("/notificaciones")

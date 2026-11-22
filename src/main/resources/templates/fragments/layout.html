@@ -31,6 +31,7 @@
         <a th:href="@{/movimientos}" th:class="${activeTab == 'movimientos' || activeTab == 'entrada' || activeTab == 'salida'} ? 'nav-item on' : 'nav-item'">Movimientos</a>
         <a th:href="@{/novedades}" th:class="${activeTab == 'novedades'} ? 'nav-item on' : 'nav-item'">Novedades</a>
         <a th:href="@{/pagos}" th:class="${activeTab == 'pagos'} ? 'nav-item on' : 'nav-item'">Pagos</a>
+        <a th:href="@{/pagos/estado-cuenta}" th:class="${activeTab == 'estado-cuenta'} ? 'nav-item on' : 'nav-item'">Estado de cuenta</a>
         <a th:href="@{/tarifas}" th:class="${activeTab == 'tarifas'} ? 'nav-item on' : 'nav-item'">Tarifas</a>
         <a th:href="@{/admin/usuarios}" th:class="${activeTab == 'usuarios'} ? 'nav-item on' : 'nav-item'">Usuarios</a>
     </div>
