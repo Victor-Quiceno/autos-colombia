@@ -1,83 +1,114 @@
 package com.autos_colombia.service;
 
 import com.autos_colombia.model.Dueno;
-import com.autos_colombia.model.Vehiculo;
 import com.autos_colombia.repository.DuenoRepository;
-import com.autos_colombia.repository.VehiculoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Servicio de tareas programadas (HU09).
+ * El "hoy" se obtiene de un Clock inyectado, lo que permite sobrescribirlo en tests
+ * sin modificar el código de producción.
+ */
 @Service
-@Transactional
 public class ScheduledTasksService {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasksService.class);
 
     private final DuenoRepository duenoRepository;
-    private final VehiculoRepository vehiculoRepository;
     private final PagoService pagoService;
     private final EmailService emailService;
+    private final MoraProcessorService moraProcessor;
+    private final Clock clock;
 
     public ScheduledTasksService(DuenoRepository duenoRepository,
-                                 VehiculoRepository vehiculoRepository,
                                  PagoService pagoService,
-                                 EmailService emailService) {
+                                 EmailService emailService,
+                                 MoraProcessorService moraProcessor,
+                                 Clock clock) {
         this.duenoRepository = duenoRepository;
-        this.vehiculoRepository = vehiculoRepository;
         this.pagoService = pagoService;
         this.emailService = emailService;
+        this.moraProcessor = moraProcessor;
+        this.clock = clock;
     }
 
+    // ── Punto de entrada del cron y del endpoint manual ───────────────────────
+
     /**
-     * Tarea programada que se ejecuta diariamente a la medianoche (00:00:00)
-     * También puede invocarse manualmente para demostración académica.
+     * Ejecutado diariamente a medianoche (00:00:00).
+     * También invocable manualmente desde POST /pagos/ejecutar-cron.
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void ejecutarVerificacionesDiarias() {
-        log.info("[CRON] Iniciando proceso automatizado de verificación de cortes y vencimientos...");
-        verificarRecordatoriosCobro();
-        verificarSuspensionPorMora();
-        log.info("[CRON] Proceso automatizado completado con éxito.");
+        LocalDate hoy = LocalDate.now(clock);
+        log.info("[CRON] Iniciando verificaciones diarias para fecha: {}", hoy);
+        verificarRecordatoriosCobro(hoy);
+        verificarSuspensionPorMora(hoy);
+        log.info("[CRON] Proceso automatizado completado.");
     }
 
-    public void verificarRecordatoriosCobro() {
-        LocalDate fechaObjetivo = LocalDate.now().plusDays(3); // 3 días calendario antes
-        List<Dueno> dueñosPorVencer = duenoRepository.findByFechaCorte(fechaObjetivo);
+    // ── Recordatorio (HU09 — 3 días antes del corte) ─────────────────────────
 
-        for (Dueno dueno : dueñosPorVencer) {
-            if ("ACTIVO".equalsIgnoreCase(dueno.getEstado())) {
-                try {
-                    var liq = pagoService.calcularLiquidacion(dueno.getId());
-                    if (liq.totalVehiculos() > 0) {
-                        emailService.enviarRecordatorioCobro(dueno, liq.totalPagar());
-                    }
-                } catch (Exception e) {
-                    log.error("Error al despachar recordatorio a {}: {}", dueno.getCorreo(), e.getMessage());
-                }
+    /**
+     * Envía recordatorio a dueños ACTIVO cuya fechaCorte == hoy + 3 días
+     * y que tengan al menos un vehículo facturable.
+     * El correo incluye nombre, fecha de vencimiento, nº de vehículos y monto a cancelar.
+     */
+    public void verificarRecordatoriosCobro(LocalDate hoy) {
+        LocalDate fechaObjetivo = hoy.plusDays(3);
+        List<Dueno> porVencer = duenoRepository.findByFechaCorte(fechaObjetivo);
+
+        for (Dueno dueno : porVencer) {
+            if (!"ACTIVO".equalsIgnoreCase(dueno.getEstado())) continue;
+            try {
+                var liq = pagoService.calcularLiquidacion(dueno.getId());
+                // calcularLiquidacion lanza si no hay facturables → se captura abajo
+                emailService.enviarRecordatorioCobro(
+                        dueno,
+                        liq.totalPagar(),
+                        liq.totalVehiculos()
+                );
+            } catch (Exception e) {
+                log.error("[RECORDATORIO] Error con {}: {}", dueno.getCorreo(), e.getMessage());
             }
         }
+    }
+
+    // ── Mora (HU09 — fechaCorte vencida) ─────────────────────────────────────
+
+    /**
+     * Inactiva a los dueños ACTIVO con fechaCorte anterior a hoy.
+     * - Si el dueño tiene vehículo(s) PRESENTE → se omite y se reintenta mañana.
+     * - Cada dueño se procesa en su propia transacción (MoraProcessorService):
+     *   el fallo de uno no detiene el lote.
+     */
+    public void verificarSuspensionPorMora(LocalDate hoy) {
+        List<Dueno> morosos = duenoRepository.findByFechaCorteBeforeAndEstado(hoy, "ACTIVO");
+        log.info("[MORA] Dueños a evaluar: {}", morosos.size());
+
+        for (Dueno dueno : morosos) {
+            try {
+                moraProcessor.inactivarPorMora(dueno);
+            } catch (Exception e) {
+                // Captura tanto el "tiene PRESENTE" como cualquier error técnico inesperado
+                log.warn("[MORA] Omitido {}: {}", dueno.getNombreCompleto(), e.getMessage());
+            }
+        }
+    }
+
+    // ── Sobrecarga sin parámetro para compatibilidad con código existente ─────
+    public void verificarRecordatoriosCobro() {
+        verificarRecordatoriosCobro(LocalDate.now(clock));
     }
 
     public void verificarSuspensionPorMora() {
-        LocalDate hoy = LocalDate.now();
-        List<Dueno> morosos = duenoRepository.findByFechaCorteBeforeAndEstado(hoy, "ACTIVO");
-
-        for (Dueno dueno : morosos) {
-            log.warn("[MORA] Inactivando cliente por vencimiento de mensualidad: {}", dueno.getNombreCompleto());
-            dueno.setEstado("INACTIVO");
-            duenoRepository.save(dueno);
-
-            List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(dueno.getId());
-            for (Vehiculo v : vehiculos) {
-                v.setEstado("INACTIVO");
-                vehiculoRepository.save(v);
-            }
-        }
+        verificarSuspensionPorMora(LocalDate.now(clock));
     }
 }

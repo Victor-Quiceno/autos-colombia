@@ -20,20 +20,30 @@ public class EmailService {
     public record NotificacionCorreo(String destinatario, String asunto, String mensaje, LocalDateTime fechaEnvio) {}
     private final List<NotificacionCorreo> ultimosCorreos = Collections.synchronizedList(new ArrayList<>());
 
-    public void enviarRecordatorioCobro(Dueno dueno, BigDecimal montoTotal) {
+    /**
+     * Envía (simulado) un recordatorio de cobro próximo a vencer.
+     * Incluye nombre del dueño, fecha de vencimiento, nº de vehículos y monto a cancelar.
+     *
+     * @param dueno         Dueño destinatario
+     * @param montoTotal    Monto calculado con vehículos facturables (T11)
+     * @param nVehiculos    Número de vehículos facturables incluidos en el monto
+     */
+    public void enviarRecordatorioCobro(Dueno dueno, BigDecimal montoTotal, int nVehiculos) {
         String asunto = "Aviso de pago próximo a vencer - Parqueadero Autos Colombia";
         String mensaje = String.format(
-                "Estimado(a) %s,\n\n" +
-                "Le recordamos que su mensualidad en el Parqueadero Autos Colombia vencerá el próximo %s.\n" +
-                "El valor total a cancelar por sus vehículos vinculados es de: $%s COP.\n\n" +
-                "Por favor realice su pago oportunamente a través de nuestra pasarela para evitar la suspensión del servicio.\n\n" +
-                "Cordialmente,\nEquipo Autos Colombia.",
+                "Estimado(a) %s,%n%n" +
+                "Le recordamos que su mensualidad en el Parqueadero Autos Colombia vencerá el %s.%n" +
+                "Vehículos incluidos en la liquidación: %d%n" +
+                "Valor total a cancelar: $%s COP.%n%n" +
+                "Realice su pago oportunamente a través de nuestra pasarela para evitar la suspensión del servicio.%n%n" +
+                "Cordialmente,%nEquipo Autos Colombia.",
                 dueno.getNombreCompleto(),
                 dueno.getFechaCorte(),
+                nVehiculos,
                 montoTotal
         );
 
-        log.info("[SMTP SIMULADO] Enviando correo a: {} | Asunto: {}", dueno.getCorreo(), asunto);
+        log.info("[SMTP SIMULADO] Correo a: {} | Asunto: {}", dueno.getCorreo(), asunto);
         ultimosCorreos.add(0, new NotificacionCorreo(dueno.getCorreo(), asunto, mensaje, LocalDateTime.now()));
     }
 
