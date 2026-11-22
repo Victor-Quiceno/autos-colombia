@@ -154,9 +154,12 @@ autos-colombia/
 | **Gestión Vehículos** | `/vehiculos` | GET / POST | `ROLE_ADMIN`, `ROLE_OPERARIO` |
 | **Gestión Celdas** | `/celdas` | GET / POST | `ROLE_ADMIN` |
 | **Tarifas** | `/tarifas` | GET / POST | `ROLE_ADMIN` |
-| **Pasarela de Pagos** | `/pagos/mensualidad` | GET / POST | `ROLE_ADMIN` |
+| **Pasarela de Pagos** | `/pagos` | GET / POST | `ROLE_ADMIN` |
+| **Estado de Cuenta** | `/pagos/estado-cuenta` | GET | `ROLE_ADMIN` |
 | **Historial Pagos** | `/pagos/historial` | GET | `ROLE_ADMIN` |
 | **Bandeja Notificaciones** | `/pagos/notificaciones` | GET | `ROLE_ADMIN` |
+| **Ejecución Manual Cron** | `/pagos/ejecutar-cron` | POST | `ROLE_ADMIN` |
+| **Gestión Usuarios** | `/admin/usuarios` | GET / POST | `ROLE_ADMIN` |
 
 ---
 
@@ -200,6 +203,63 @@ mvnw.cmd test -Dtest=Iteracion2ServiciosTest
 
 # En Linux / macOS:
 ./mvnw test -Dtest=Iteracion2ServiciosTest
+```
+
+---
+
+## 10. Iteración 3: Pagos, Tarifas, Mora y Estado de Cuenta
+
+Esta versión incorpora la **Iteración 3** de la Evidencia de Aprendizaje 2 (EA2), completando el ciclo financiero, facturación recurrente de mensualidades, pasarela sandbox, tareas programadas de suspensión por mora y estado de cuenta.
+
+### Historias de Usuario Cubiertas
+* **HU08 - Pago de mensualidad y pasarela de pagos:**
+  * Liquidación dinámica según tarifas parametrizadas por tipo de vehículo (`CARRO`/`MOTO`) sobre vehículos facturables.
+  * Adaptador de pasarela simulada (`PasarelaPagoService`) con soporte para resultados sandbox **Aprobado** y **Rechazado** (sin almacenar datos de tarjetas).
+  * Registro y trazabilidad de intentos rechazados (`RECH-yyyyMMdd-XXXXXX`) sin alterar fechas de corte ni estados de cliente.
+  * Cálculo robusto de fecha de corte para pagos aprobados: si la fecha estaba vencida, se calcula como `hoy + 1 mes`; si estaba vigente, suma 1 mes al corte actual.
+  * Reactivación inteligente: reactiva exclusivamente a los vehículos inactivados por mora (que conservan su celda) y no altera los inhabilitados manualmente.
+* **HU09 - Notificaciones y suspensión por mora (Scheduled Tasks):**
+  * Tarea programada diaria a la medianoche (`@Scheduled(cron = "0 0 0 * * ?")`).
+  * Despacho de recordatorios de cobro a clientes activos con vencimiento exactamente en 3 días calendario, calculando el importe y detalle de vehículos.
+  * Suspensión automática por mora en transacción individual por cliente (`MoraProcessorService`): la falla de un cliente no detiene el lote.
+  * Conservación de asignación de celda durante la mora para garantizar retorno transparente tras el pago.
+  * Regla de protección de presencia física: se omite la suspensión por mora si algún vehículo del cliente se encuentra físicamente `PRESENTE` en el parqueadero.
+* **HU12 - Parametrización de tarifas de parqueadero:**
+  * Gestión y actualización exclusiva para el rol `ROLE_ADMIN` en `/tarifas`.
+  * Validación estricta de importes mayores a cero (`@Positive`) y control de obligatoriedad de tarifas antes de liquidar mensualidades.
+* **HU14 - Estado de cuenta y filtros de auditoría:**
+  * Tablero consolidado `/pagos/estado-cuenta` con cálculo de días restantes, último pago registrado, badges de estado (`Al día`, `Por vencer`, `En mora`, `Inactivo`) y acceso directo al pago preseleccionado.
+  * Módulo de auditoría `/pagos/historial` con filtros combinados por cliente, estado de transacción (`APROBADO`/`RECHAZADO`) y rango de fechas.
+
+### Nuevas Rutas Incorporadas
+
+| Módulo | Ruta | Métodos | Permisos |
+| :--- | :--- | :--- | :--- |
+| **Pasarela Sandbox** | `/pagos` | GET / POST | `ROLE_ADMIN` |
+| **Estado de Cuenta** | `/pagos/estado-cuenta` | GET | `ROLE_ADMIN` |
+| **Historial con Filtros** | `/pagos/historial` | GET | `ROLE_ADMIN` |
+| **Ejecución Manual Cron** | `/pagos/ejecutar-cron` | POST | `ROLE_ADMIN` |
+| **Notificaciones Enviadas** | `/pagos/notificaciones` | GET | `ROLE_ADMIN` |
+
+### Pruebas de Mora y Recordatorios en Demostración
+Para verificar los procesos nocturnos sin esperar la medianoche:
+1. Iniciar sesión como administrador (`admin` / `admin123`).
+2. Ingresar a **Pagos** $\rightarrow$ **Revisar recordatorios por corte (HU09)** en `/pagos/notificaciones`.
+3. Hacer clic en el botón **"Ejecutar verificación diaria ahora"** (dispara `POST /pagos/ejecutar-cron`).
+4. El sistema evaluará los cortes frente a la fecha del sistema, despachará los correos simulados visibles en la bandeja inferior y suspenderá los clientes con corte superado.
+
+### Limitaciones Académicas Conocidas
+* **Pasarela de pagos:** Es una pasarela sandbox simulada con fines académicos; no conecta con redes adquirentes reales ni almacena números de tarjeta de crédito/débito.
+* **Servicio de correo electrónico:** `EmailService` opera en modo simulado registrando los mensajes en el log del servidor y en una memoria para consulta en `/pagos/notificaciones`, sin requerir un servidor SMTP externo configurado.
+
+### Ejecución de Pruebas Unitarias
+Para ejecutar la suite completa de pruebas automatizadas del proyecto (18 pruebas en total):
+```bash
+# En Windows:
+mvnw.cmd test
+
+# En Linux / macOS:
+./mvnw test
 ```
 
 ### Ejecución de la Aplicación
