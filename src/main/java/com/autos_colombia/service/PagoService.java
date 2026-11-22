@@ -12,10 +12,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -44,6 +46,7 @@ public class PagoService {
         return pagoRepository.findAllByOrderByFechaPagoDesc();
     }
 
+    // ── Record de liquidación ─────────────────────────────────────────────────
     public record LiquidacionMensualidad(
             Dueno dueno,
             long cantidadCarros,
@@ -53,35 +56,68 @@ public class PagoService {
             BigDecimal subtotalCarros,
             BigDecimal subtotalMotos,
             BigDecimal totalPagar,
-            int totalVehiculos
+            int totalVehiculos        // facturables únicamente
     ) {}
 
+    /**
+     * Determina si un vehículo es facturable:
+     *   - ACTIVO (con o sin celda) → facturable
+     *   - INACTIVO con celda asignada → inactivado por mora → facturable
+     *   - INACTIVO con celda null → inhabilitado manualmente → NO facturable
+     */
+    private boolean esFacturable(Vehiculo v) {
+        if ("ACTIVO".equalsIgnoreCase(v.getEstado())) return true;
+        if ("INACTIVO".equalsIgnoreCase(v.getEstado()) && v.getCelda() != null) return true;
+        return false;
+    }
+
+    /**
+     * Calcula la liquidación usando solo vehículos facturables.
+     * Lanza error de negocio si:
+     *   - no hay vehículos facturables
+     *   - hay carros facturables pero la tarifa CARRO no está configurada (es 0)
+     *   - hay motos facturable pero la tarifa MOTO no está configurada (es 0)
+     */
     @Transactional(readOnly = true)
     public LiquidacionMensualidad calcularLiquidacion(Long idDueno) {
         Dueno dueno = duenoRepository.findById(idDueno)
                 .orElseThrow(() -> new IllegalArgumentException("Dueño no encontrado con ID: " + idDueno));
 
-        List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(idDueno);
+        List<Vehiculo> todos = vehiculoRepository.findByDuenoId(idDueno);
+        List<Vehiculo> facturables = todos.stream().filter(this::esFacturable).collect(Collectors.toList());
 
-        long carros = vehiculos.stream().filter(v -> "CARRO".equalsIgnoreCase(v.getTipoVehiculo())).count();
-        long motos = vehiculos.stream().filter(v -> "MOTO".equalsIgnoreCase(v.getTipoVehiculo())).count();
+        if (facturables.isEmpty()) {
+            throw new IllegalStateException(
+                    "El cliente no tiene vehículos facturables. Los vehículos inhabilitados manualmente (sin celda) no se cobran.");
+        }
+
+        long carros = facturables.stream().filter(v -> "CARRO".equalsIgnoreCase(v.getTipoVehiculo())).count();
+        long motos  = facturables.stream().filter(v -> "MOTO".equalsIgnoreCase(v.getTipoVehiculo())).count();
 
         BigDecimal tarifaCarro = tarifaService.obtenerValorTarifa("CARRO");
-        BigDecimal tarifaMoto = tarifaService.obtenerValorTarifa("MOTO");
+        BigDecimal tarifaMoto  = tarifaService.obtenerValorTarifa("MOTO");
+
+        // Validar que las tarifas necesarias estén configuradas
+        if (carros > 0 && BigDecimal.ZERO.compareTo(tarifaCarro) == 0) {
+            throw new IllegalStateException(
+                    "La tarifa para CARRO no está configurada. Configúrela en Tarifas antes de procesar el pago.");
+        }
+        if (motos > 0 && BigDecimal.ZERO.compareTo(tarifaMoto) == 0) {
+            throw new IllegalStateException(
+                    "La tarifa para MOTO no está configurada. Configúrela en Tarifas antes de procesar el pago.");
+        }
 
         BigDecimal subtotalCarros = tarifaCarro.multiply(BigDecimal.valueOf(carros));
-        BigDecimal subtotalMotos = tarifaMoto.multiply(BigDecimal.valueOf(motos));
+        BigDecimal subtotalMotos  = tarifaMoto.multiply(BigDecimal.valueOf(motos));
         BigDecimal total = subtotalCarros.add(subtotalMotos);
 
         return new LiquidacionMensualidad(
-                dueno, carros, motos, tarifaCarro, tarifaMoto, subtotalCarros, subtotalMotos, total, vehiculos.size()
+                dueno, carros, motos, tarifaCarro, tarifaMoto,
+                subtotalCarros, subtotalMotos, total, facturables.size()
         );
     }
 
-    /**
-     * Genera una referencia de transacción única con prefijo según resultado.
-     * PAGO-yyyyMMdd-XXXXXX (aprobado) · RECH-yyyyMMdd-XXXXXX (rechazado)
-     */
+    // ── Referencia única ──────────────────────────────────────────────────────
     private String generarReferencia(String estado) {
         String prefijo = "RECHAZADO".equals(estado) ? "RECH" : "PAGO";
         return prefijo + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -89,8 +125,8 @@ public class PagoService {
     }
 
     /**
-     * Guarda el intento rechazado en su propia transacción independiente
-     * para que no sufra rollback si la transacción padre falla.
+     * Guarda el intento RECHAZADO en transacción independiente (REQUIRES_NEW)
+     * para que persista aunque la transacción padre haga rollback.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Pago guardarIntento(Dueno dueno, BigDecimal monto, int cantVehiculos,
@@ -107,15 +143,13 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
 
+    // ── Proceso principal ─────────────────────────────────────────────────────
     public Pago procesarPago(PagoDTO dto) {
+        // calcularLiquidacion ya valida facturables y tarifas → lanza si hay error
         LiquidacionMensualidad liq = calcularLiquidacion(dto.getIdDueno());
         Dueno dueno = liq.dueno();
 
-        if (liq.totalVehiculos() == 0) {
-            throw new IllegalStateException("El cliente no tiene vehículos vinculados para liquidar mensualidad.");
-        }
-
-        // Consultar pasarela simulada con el resultado elegido por el operador
+        // Consultar pasarela simulada
         String estadoPago = pasarela.procesarTransaccion(
                 liq.totalPagar(),
                 dto.getMetodoPago(),
@@ -123,8 +157,7 @@ public class PagoService {
         );
 
         if ("RECHAZADO".equals(estadoPago)) {
-            // Guardar intento en transacción independiente (no hace rollback)
-            // No tocar fechaCorte, estado del dueño ni de los vehículos
+            // Persistir intento sin modificar estado del dueño/vehículos
             Pago intento = guardarIntento(dueno, liq.totalPagar(), liq.totalVehiculos(),
                     dto.getMetodoPago(), "RECHAZADO");
             throw new PagoRechazadoException(
@@ -133,19 +166,26 @@ public class PagoService {
             );
         }
 
-        // --- APROBADO: comportamiento original ---
-        String ref = generarReferencia("APROBADO");
+        // ── APROBADO ──────────────────────────────────────────────────────────
 
-        // HU08: sumar 1 mes a fecha_corte
-        dueno.setFechaCorte(dueno.getFechaCorte().plusMonths(1));
+        // T11: fecha_corte — si ya venció, partir desde hoy; si no, sumar desde la fecha actual
+        LocalDate hoy = LocalDate.now();
+        LocalDate nuevaFechaCorte = dueno.getFechaCorte().isBefore(hoy)
+                ? hoy.plusMonths(1)
+                : dueno.getFechaCorte().plusMonths(1);
+        dueno.setFechaCorte(nuevaFechaCorte);
 
-        // HU08: reactivar dueño e vehículos si estaban inactivos
+        // T11: reactivar solo si el dueño está inactivo
         if ("INACTIVO".equalsIgnoreCase(dueno.getEstado())) {
             dueno.setEstado("ACTIVO");
+            // Reactivar SOLO los vehículos inactivados por mora (INACTIVO con celda asignada)
+            // Los INACTIVO con celda null fueron inhabilitados manualmente → no tocar
             List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(dueno.getId());
             for (Vehiculo v : vehiculos) {
-                v.setEstado("ACTIVO");
-                vehiculoRepository.save(v);
+                if ("INACTIVO".equalsIgnoreCase(v.getEstado()) && v.getCelda() != null) {
+                    v.setEstado("ACTIVO");
+                    vehiculoRepository.save(v);
+                }
             }
         }
         duenoRepository.save(dueno);
@@ -155,7 +195,7 @@ public class PagoService {
                 .fechaPago(LocalDateTime.now())
                 .montoTotal(liq.totalPagar())
                 .cantidadVehiculos(liq.totalVehiculos())
-                .referenciaTransaccion(ref)
+                .referenciaTransaccion(generarReferencia("APROBADO"))
                 .metodoPago(dto.getMetodoPago().toUpperCase())
                 .estadoPago("APROBADO")
                 .build();
@@ -163,7 +203,7 @@ public class PagoService {
         return pagoRepository.save(pago);
     }
 
-    // ── Excepción interna que lleva el Pago rechazado ya guardado ──────────────
+    // ── Excepción interna ─────────────────────────────────────────────────────
     public static class PagoRechazadoException extends RuntimeException {
         private final Pago pago;
         public PagoRechazadoException(String msg, Pago pago) {

@@ -90,6 +90,10 @@
                         <b th:text="${'$' + #numbers.formatDecimal(comprobante.montoTotal, 0, 'POINT', 0, 'POINT')}"></b>
                     </div>
                     <div class="ln">
+                        <span>Vehículos facturados</span>
+                        <b th:text="${comprobante.cantidadVehiculos}"></b>
+                    </div>
+                    <div class="ln">
                         <span>Método</span>
                         <b th:text="${comprobante.metodoPago}"></b>
                     </div>
