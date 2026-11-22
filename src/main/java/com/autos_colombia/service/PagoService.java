@@ -8,6 +8,7 @@ import com.autos_colombia.repository.DuenoRepository;
 import com.autos_colombia.repository.PagoRepository;
 import com.autos_colombia.repository.VehiculoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -24,15 +25,18 @@ public class PagoService {
     private final DuenoRepository duenoRepository;
     private final VehiculoRepository vehiculoRepository;
     private final TarifaService tarifaService;
+    private final PasarelaPagoService pasarela;
 
     public PagoService(PagoRepository pagoRepository,
                        DuenoRepository duenoRepository,
                        VehiculoRepository vehiculoRepository,
-                       TarifaService tarifaService) {
+                       TarifaService tarifaService,
+                       PasarelaPagoService pasarela) {
         this.pagoRepository = pagoRepository;
         this.duenoRepository = duenoRepository;
         this.vehiculoRepository = vehiculoRepository;
         this.tarifaService = tarifaService;
+        this.pasarela = pasarela;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +78,35 @@ public class PagoService {
         );
     }
 
+    /**
+     * Genera una referencia de transacción única con prefijo según resultado.
+     * PAGO-yyyyMMdd-XXXXXX (aprobado) · RECH-yyyyMMdd-XXXXXX (rechazado)
+     */
+    private String generarReferencia(String estado) {
+        String prefijo = "RECHAZADO".equals(estado) ? "RECH" : "PAGO";
+        return prefijo + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+    }
+
+    /**
+     * Guarda el intento rechazado en su propia transacción independiente
+     * para que no sufra rollback si la transacción padre falla.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Pago guardarIntento(Dueno dueno, BigDecimal monto, int cantVehiculos,
+                               String metodoPago, String estado) {
+        Pago pago = Pago.builder()
+                .dueno(dueno)
+                .fechaPago(LocalDateTime.now())
+                .montoTotal(monto)
+                .cantidadVehiculos(cantVehiculos)
+                .referenciaTransaccion(generarReferencia(estado))
+                .metodoPago(metodoPago.toUpperCase())
+                .estadoPago(estado)
+                .build();
+        return pagoRepository.save(pago);
+    }
+
     public Pago procesarPago(PagoDTO dto) {
         LiquidacionMensualidad liq = calcularLiquidacion(dto.getIdDueno());
         Dueno dueno = liq.dueno();
@@ -82,13 +115,31 @@ public class PagoService {
             throw new IllegalStateException("El cliente no tiene vehículos vinculados para liquidar mensualidad.");
         }
 
-        // HU08 Criterio 2 y 3: generar referencia única y sumar 1 mes a la fecha de corte
-        String ref = "PAGO-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) +
-                "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        // Consultar pasarela simulada con el resultado elegido por el operador
+        String estadoPago = pasarela.procesarTransaccion(
+                liq.totalPagar(),
+                dto.getMetodoPago(),
+                dto.getResultadoSimulado()
+        );
 
+        if ("RECHAZADO".equals(estadoPago)) {
+            // Guardar intento en transacción independiente (no hace rollback)
+            // No tocar fechaCorte, estado del dueño ni de los vehículos
+            Pago intento = guardarIntento(dueno, liq.totalPagar(), liq.totalVehiculos(),
+                    dto.getMetodoPago(), "RECHAZADO");
+            throw new PagoRechazadoException(
+                    "Pago rechazado por la pasarela. Referencia del intento: " + intento.getReferenciaTransaccion(),
+                    intento
+            );
+        }
+
+        // --- APROBADO: comportamiento original ---
+        String ref = generarReferencia("APROBADO");
+
+        // HU08: sumar 1 mes a fecha_corte
         dueno.setFechaCorte(dueno.getFechaCorte().plusMonths(1));
 
-        // HU08 Criterio 4: Si el dueño y sus vehículos se encontraban Inactivos, reactivarlos
+        // HU08: reactivar dueño e vehículos si estaban inactivos
         if ("INACTIVO".equalsIgnoreCase(dueno.getEstado())) {
             dueno.setEstado("ACTIVO");
             List<Vehiculo> vehiculos = vehiculoRepository.findByDuenoId(dueno.getId());
@@ -110,5 +161,15 @@ public class PagoService {
                 .build();
 
         return pagoRepository.save(pago);
+    }
+
+    // ── Excepción interna que lleva el Pago rechazado ya guardado ──────────────
+    public static class PagoRechazadoException extends RuntimeException {
+        private final Pago pago;
+        public PagoRechazadoException(String msg, Pago pago) {
+            super(msg);
+            this.pago = pago;
+        }
+        public Pago getPago() { return pago; }
     }
 }

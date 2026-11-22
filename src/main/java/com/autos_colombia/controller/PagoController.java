@@ -74,6 +74,14 @@ public class PagoController {
             model.addAttribute("comprobante", pago);
             model.addAttribute("mensajeExito", "Pago aprobado: dueño y vehículos reactivados.");
             model.addAttribute("liq", pagoService.calcularLiquidacion(dto.getIdDueno()));
+        } catch (PagoService.PagoRechazadoException e) {
+            // Pago rechazado: ya fue guardado en BD; mostrar comprobante de rechazo
+            model.addAttribute("comprobanteRechazado", e.getPago());
+            model.addAttribute("error", "Pago rechazado por la pasarela simulada. Intento registrado con referencia: "
+                    + e.getPago().getReferenciaTransaccion());
+            try {
+                model.addAttribute("liq", pagoService.calcularLiquidacion(dto.getIdDueno()));
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             try {

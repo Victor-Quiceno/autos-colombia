@@ -16,4 +16,7 @@ public class PagoDTO {
 
     @NotBlank(message = "El método de pago es obligatorio")
     private String metodoPago; // PSE, TARJETA_CREDITO, TARJETA_DEBITO, EFECTIVO
+
+    // Selector sandbox: "APROBADO" (default) o "RECHAZADO"
+    private String resultadoSimulado = "APROBADO";
 }

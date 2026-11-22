@@ -57,6 +57,14 @@
                             </select>
                         </label>
 
+                        <label style="margin-top: 12px;">
+                            Resultado simulado de la pasarela <span style="font-size:11px;color:#6b7280;">(sandbox)</span>
+                            <select class="in" name="resultadoSimulado">
+                                <option value="APROBADO" selected>✅ Aprobado</option>
+                                <option value="RECHAZADO">❌ Rechazado</option>
+                            </select>
+                        </label>
+
                         <button type="submit" class="btn" style="width: 100%; margin-top: 16px;">Pagar con pasarela</button>
                     </form>
                 </div>
@@ -66,8 +74,9 @@
             <div class="card" style="flex: 1;">
                 <h2>Comprobante</h2>
 
+                <!-- Comprobante APROBADO -->
                 <div th:if="${comprobante != null}">
-                    <div class="al s">Pago aprobado: dueño y vehículos reactivados</div>
+                    <div class="al s">✅ Pago aprobado — dueño y vehículos reactivados</div>
                     <div class="ln">
                         <span>Referencia</span>
                         <b th:text="${comprobante.referenciaTransaccion}">[REF-PAGO]</b>
@@ -88,6 +97,30 @@
                         <span>Nueva fecha de corte</span>
                         <b th:text="${comprobante.dueno.fechaCorte}"></b>
                     </div>
+                </div>
+
+                <!-- Comprobante RECHAZADO -->
+                <div th:if="${comprobanteRechazado != null}">
+                    <div class="al e">❌ Pago rechazado por la pasarela simulada</div>
+                    <div class="ln">
+                        <span>Referencia del intento</span>
+                        <b th:text="${comprobanteRechazado.referenciaTransaccion}" style="color:#dc2626;"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Fecha y hora</span>
+                        <b th:text="${#temporals.format(comprobanteRechazado.fechaPago, 'yyyy-MM-dd HH:mm')}"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Monto intentado</span>
+                        <b th:text="${'$' + #numbers.formatDecimal(comprobanteRechazado.montoTotal, 0, 'POINT', 0, 'POINT')}"></b>
+                    </div>
+                    <div class="ln">
+                        <span>Método</span>
+                        <b th:text="${comprobanteRechazado.metodoPago}"></b>
+                    </div>
+                    <p style="color:#6b7280;font-size:13px;margin-top:12px;">
+                        El estado del dueño y sus vehículos no fue modificado. Intente nuevamente o elija otro método de pago.
+                    </p>
                 </div>
 
                 <div th:unless="${comprobante != null}">

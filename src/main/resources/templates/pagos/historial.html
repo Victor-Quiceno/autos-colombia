@@ -37,7 +37,7 @@
                     <td th:text="${p.referenciaTransaccion}" style="font-weight: 700; color: #0e7490;"></td>
                     <td th:text="${p.dueno.nombreCompleto}"></td>
                     <td th:text="${#temporals.format(p.fechaPago, 'yyyy-MM-dd HH:mm')}"></td>
-                    <td th:text="${p.cantidadVehiculos} + ' activos'"></td>
+                    <td th:text="${p.cantidadVehiculos}"></td>
                     <td th:text="${p.metodoPago}"></td>
                     <td th:text="${'$' + #numbers.formatDecimal(p.montoTotal, 0, 'POINT', 0, 'POINT')}" style="font-weight: 600;"></td>
                     <td>
